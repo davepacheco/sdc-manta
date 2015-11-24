@@ -67,6 +67,7 @@ check:: $(NODE_EXEC)
 .PHONY: test
 test: all
 	$(NODE) test/tst.adm.js || echo "TEST FAILED"
+	$(NODE) test/tst.adm_services.js  || echo "TEST FAILED"
 	$(NODE) test/tst.zk.js  || echo "TEST FAILED"
 
 .PHONY: deps

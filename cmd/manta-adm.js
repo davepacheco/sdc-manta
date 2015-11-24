@@ -15,7 +15,9 @@
  *
  *     cn		show information about CNs
  *
- *     show		show information about all deployed services
+ *     services		show information about Manta services
+ *
+ *     show		show information about all deployed service instances
  *
  *     update		given a JSON file describing the desired Manta
  *     			configuration, figure out how to get from the current
@@ -234,7 +236,81 @@ MantaAdm.prototype.do_genconfig.help =
 MantaAdm.prototype.do_genconfig.options = [];
 
 /*
- * manta-adm show: shows information about deployed services
+ * manta-adm services: list information about configured Manta services
+ */
+MantaAdm.prototype.do_services = function (subcmd, opts, args, callback)
+{
+	var self = this;
+	var selected, filter;
+
+	if (opts.columns) {
+		selected = checkColumns(
+		    madm.serviceColumnNames(), opts.columns);
+		if (selected instanceof Error) {
+			callback(selected);
+			return;
+		}
+	}
+
+	if (args.length > 1) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	if (args.length > 0)
+		filter = args[0];
+
+	this.initAdm(opts, function () {
+		var adm;
+		adm = self.madm_adm;
+		adm.fetchDeployed(function (err) {
+			if (err)
+				fatal(err.message);
+
+			var count = adm.dumpServices(process.stdout, {
+			    'omitHeader': opts.omit_header,
+			    'filter': filter,
+			    'columns': opts.columns ? selected : null
+			});
+
+			if (filter !== undefined && count === 0) {
+				fatal(new VError(
+				    'no service matching filter: "%s"',
+				    filter));
+			}
+
+			self.finiAdm();
+		});
+	});
+};
+
+MantaAdm.prototype.do_services.help =
+    'Show information about Manta services.\n\n' +
+    'Usage:\n\n' +
+    '    manta-adm services OPTIONS [SERVICE]\n\n' +
+    'Examples:\n\n' +
+    '    # list all Manta services and the latest image for each one\n' +
+    '    manta-adm services\n\n' +
+    '{{options}}\n' +
+    'Available columns for -o:\n    ' + madm.serviceColumnNames().join(', ');
+
+MantaAdm.prototype.do_services.options = [ {
+    'names': [ 'omit-header', 'H'],
+    'type': 'bool',
+    'help': 'Omit the header row for columnar output'
+}, {
+    'names': [ 'log_file', 'l' ],
+    'type': 'string',
+    'help': 'dump logs to this file (or "stdout")'
+}, {
+    'names': [ 'columns', 'o' ],
+    'type': 'arrayOfString',
+    'help': 'Select columns for output (see below)'
+} ];
+
+
+/*
+ * manta-adm show: shows information about deployed service instances
  */
 MantaAdm.prototype.do_show = function (subcmd, opts, args, callback)
 {
@@ -297,7 +373,7 @@ MantaAdm.prototype.do_show = function (subcmd, opts, args, callback)
 };
 
 MantaAdm.prototype.do_show.help =
-    'Show information about deployed services.\n\n' +
+    'Show information about deployed service instances (zones).\n\n' +
     'Usage:\n\n' +
     '    manta-adm show OPTIONS [SERVICE]\n\n' +
     'Examples:\n\n' +
