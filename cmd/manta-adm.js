@@ -285,14 +285,18 @@ MantaAdm.prototype.do_services = function (subcmd, opts, args, callback)
 };
 
 MantaAdm.prototype.do_services.help =
-    'Show information about Manta services.\n\n' +
+    'Show information about Manta services (e.g., latest images)\n\n' +
     'Usage:\n\n' +
     '    manta-adm services OPTIONS [SERVICE]\n\n' +
     'Examples:\n\n' +
     '    # list all Manta services and the latest image for each one\n' +
     '    manta-adm services\n\n' +
     '{{options}}\n' +
-    'Available columns for -o:\n    ' + madm.serviceColumnNames().join(', ');
+    'Available columns for -o:\n    ' + madm.serviceColumnNames().join(', ') +
+    '\n\n' +
+    'The "image" column generally refers to the image most recently\n' +
+    'downloaded with "manta-init", though the underlying metadata can be\n' +
+    'directly modified by operators.';
 
 MantaAdm.prototype.do_services.options = [ {
     'names': [ 'omit-header', 'H'],
