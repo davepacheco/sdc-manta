@@ -55,7 +55,7 @@ var mzArg0 = path.basename(process.argv[1]);
 var mzSynopses = [
     '-a | --all-zones COMMAND',
     '-g | --global-zones COMMAND',
-    '-n | --compute-node HOSTNAME|SERVER_UUID... COMMAND',
+    '-S | --compute-node HOSTNAME|SERVER_UUID... COMMAND',
     '-s | --service SERVICE... COMMAND',
     '-z | --zonename ZONENAME... COMMAND'
 ];
@@ -74,10 +74,12 @@ var mzOptionStr = [
     'E:(amqp-timeout)',
 
     'a(all-zones)',
+    'c(concurrency)',
     'g(global-zones)',
-    'n:(compute-node)',
+    'n(dry-run)',
     's:(service)',
     'z:(zonename)',
+    'S:(compute-node)',
     'T:(exectimeout)'
 ].join('');
 
@@ -85,6 +87,7 @@ var mzOptionStr = [
  * Default configuration values.
  */
 
+var mzConcurrency = 10;			/* concurrency for Ur commands */
 var mzExecTimeoutDefault = 60 * 1000;	/* milliseconds */
 var mzAmqpConnectTimeoutDefault = 5000;	/* milliseconds */
 var mzAmqpPortDefault = 5672;		/* standard amqp port */
@@ -169,6 +172,8 @@ function mzParseCommandLine(argv)
 	    'scopeServices': null,
 	    'scopeGlobalZones': false,
 
+	    'concurrency': mzConcurrency,
+	    'dryRun': false,
 	    'streamStatus': process.stderr,
 
 	    'execTimeout': mzExecTimeoutDefault,
@@ -229,12 +234,7 @@ function mzParseCommandLine(argv)
 			break;
 
 		case 'n':
-			if (args.scopeComputeNodes === null) {
-				args.scopeComputeNodes = [];
-			}
-
-			args.scopeComputeNodes = appendCommaSeparatedList(
-			    args.scopeComputeNodes, option.optarg);
+			args.dryRun = true;
 			break;
 
 		case 's':
@@ -254,9 +254,28 @@ function mzParseCommandLine(argv)
 			    args.scopeZones, option.optarg);
 			break;
 
+		case 'S':
+			if (args.scopeComputeNodes === null) {
+				args.scopeComputeNodes = [];
+			}
+
+			args.scopeComputeNodes = appendCommaSeparatedList(
+			    args.scopeComputeNodes, option.optarg);
+			break;
+
 		/*
 		 * Other options
 		 */
+		case 'c':
+			p = parseInt(option.optarg, 10);
+			if (isNaN(p) || p <= 0) {
+				return (new VError(
+				    'expected positive integer for ' +
+				    '-c/--concurrency, but got: %s',
+				    option.optarg));
+			}
+			args.concurrency = p;
+			break;
 
 		case 'T':
 			p = parseInt(option.optarg, 10);
