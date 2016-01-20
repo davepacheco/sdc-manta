@@ -98,15 +98,7 @@ function main()
 {
 	var args, exec;
 
-	/*
-	 * XXX This should move into node-cmdutil.
-	 */
-	process.stdout.on('error', function (err) {
-		if (err.code == 'EPIPE')
-			process.exit(0);
-		throw (err);
-	});
-
+	cmdutil.exitOnEpipe();
 	cmdutil.configure({
 	    'synopses': mzSynopses,
 	    'usageMessage': mzUsageMessage
