@@ -167,7 +167,7 @@ function mzParseCommandLine(argv)
 	    'amqpTimeout': mzAmqpConnectTimeoutDefault,
 	    'amqpLogin': mzAmqpLoginDefault,
 	    'amqpPassword': mzAmqpPasswordDefault,
-	    'sdcConfigFile': sdc.sdcConfigPathDefault,
+	    'sdcMantaConfigFile': sdc.sdcMantaConfigPathDefault,
 
 	    'scopeAllZones': false,
 	    'scopeComputeNodes': null,
