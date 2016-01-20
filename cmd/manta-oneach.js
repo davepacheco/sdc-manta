@@ -146,6 +146,9 @@ function main()
 		}
 
 		args.log.info('done');
+		if (exec.nexecerrors() > 0) {
+			process.exit(1);
+		}
 	});
 }
 
