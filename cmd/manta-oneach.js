@@ -143,12 +143,10 @@ function main()
 	next.pipe(process.stdout);
 
 	exec.on('error', function (err) {
-		args.log.error(err, 'fatal error');
 		cmdutil.fail(err);
 	});
 
 	process.stdout.on('finish', function () {
-		args.log.info('done');
 		if (exec.nexecerrors() > 0) {
 			process.exit(1);
 		}
