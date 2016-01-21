@@ -79,6 +79,7 @@ var mzOptionStr = [
     'n(dry-run)',
     's:(service)',
     'z:(zonename)',
+    'J(jsonstream)',
     'S:(compute-node)',
     'T:(exectimeout)'
 ].join('');
@@ -96,7 +97,7 @@ var mzAmqpPasswordDefault = 'guest';	/* suitable for sdc/manta */
 
 function main()
 {
-	var args, exec;
+	var args, exec, next;
 
 	cmdutil.exitOnEpipe();
 	cmdutil.configure({
@@ -131,12 +132,22 @@ function main()
 	});
 
 	exec = new oneach.mzCommandExecutor(args);
-	exec.execute(function (err) {
-		if (err) {
-			args.log.error(err, 'fatal error');
-			cmdutil.fail(err);
-		}
+	if (args.outputMode == 'text') {
+		next = new oneach.mzResultToText();
+	} else {
+		assert.equal(args.outputMode, 'jsonstream');
+		next = new oneach.mzResultToJson();
+	}
 
+	exec.pipe(next);
+	next.pipe(process.stdout);
+
+	exec.on('error', function (err) {
+		args.log.error(err, 'fatal error');
+		cmdutil.fail(err);
+	});
+
+	process.stdout.on('finish', function () {
 		args.log.info('done');
 		if (exec.nexecerrors() > 0) {
 			process.exit(1);
@@ -172,7 +183,9 @@ function mzParseCommandLine(argv)
 	    'streamStatus': process.stderr,
 
 	    'execTimeout': mzExecTimeoutDefault,
-	    'execCommand': null
+	    'execCommand': null,
+
+	    'outputMode': 'text'
 	};
 
 	parser = new getopt.BasicParser(mzOptionStr, argv, 0);
@@ -270,6 +283,10 @@ function mzParseCommandLine(argv)
 				    option.optarg));
 			}
 			args.concurrency = p;
+			break;
+
+		case 'J':
+			args.outputMode = 'jsonstream';
 			break;
 
 		case 'T':
