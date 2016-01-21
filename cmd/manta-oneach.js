@@ -13,25 +13,7 @@
 /*
  * manta-oneach: execute a shell command on all Manta zones, or a subset of
  * zones using filters based on zonename, service name, or compute node.
- * Examples:
- *
- *     # execute COMMAND in all non-local zones (NOT global zones)
- *     manta-oneach -a | --all-zones COMMAND
- *
- *     # execute COMMAND in specified zones
- *     manta-oneach -z | --zonename ZONENAME ... COMMAND
- *
- *     # execute COMMAND in all zones of service SERVICE (e.g., "webapi")
- *     manta-oneach -s | --service SERVICE ... COMMAND
- *
- *     # execute COMMAND in all GZs for all nodes used for Manta
- *     manta-oneach -g | --global-zones COMMAND
- *
- * In all cases, COMMAND is interpreted as an arbitrary bash script, just like
- * sdc-oneachnode.  The following options have the same semantics as with
- * sdc-oneachnode:
- *
- *     -T | --exectimeout SECONDS
+ * See usage message for details.
  */
 
 var assert = require('assert');
@@ -53,17 +35,71 @@ var oneach = require('../lib/oneach');
 var mzArg0 = path.basename(process.argv[1]);
 
 var mzSynopses = [
-    '-a | --all-zones COMMAND',
-    '-g | --global-zones COMMAND',
-    '-S | --compute-node HOSTNAME|SERVER_UUID... COMMAND',
-    '-s | --service SERVICE... COMMAND',
-    '-z | --zonename ZONENAME... COMMAND'
+    'SCOPE_ARGUMENTS [OPTIONS] OPERATION_ARGUMENTS'
 ];
 
 var mzUsageMessage = [
     '',
     'Execute a shell command on all Manta zones or a subset of zones using ',
-    'filters based on zonename, service name, or compute node.'
+    'filters based on zonename, service name, or compute node.',
+    '',
+    'SCOPE ARGUMENTS',
+    '',
+    '    -a | --all-zones                     all non-marlin, non-global zones',
+    '    -S | --compute-node HOSTNAME|UUID... zones on named compute node',
+    '    -s | --service SERVICE...            zones of SAPI service SERVICE',
+    '    -z | --zonename ZONENAME...          specified zones only',
+    '    -g | --global-zones                  operate on global zones of ',
+    '                                         whichever zones would otherwise',
+    '                                         have been operated on',
+    '',
+    'OPERATION ARGUMENTS',
+    '',
+    '    The only supported operation argument is a single string argument',
+    '    identifying the command to execute in each zone.  The command may',
+    '    be an arbitrary bash script.',
+    '',
+    'OTHER OPTIONS',
+    '',
+    '    -c | --concurrency N                 number of operations to allow ',
+    '                                         outstanding at any given time',
+    '',
+    '    -J | --jsonstream                    emit newline-separated JSON',
+    '                                         output, similar to ',
+    '                                         sdc-oneachnode(1), but with ',
+    '                                         additional "zonename" and ',
+    '                                         "service" properties (unless ',
+    '                                         --global-zones was specified)',
+    '',
+    '    -n | --dry-run                       report what would be executed ',
+    '                                         without actually running it',
+    '',
+    '    -T | --exectimeout SECONDS           command execution timeout',
+    '                                         (same as for sdc-oneachnode(1))',
+    '                                         default: 60 seconds',
+    '',
+    '    --amqp-host HOST                     AMQP connection parameters',
+    '    --amqp-port TCP_PORT                 default: auto-configured',
+    '    --amqp-login LOGIN',
+    '    --amqp-password PASSWORD',
+    '    --amqp-timeout SECONDS               default: 5 seconds',
+    '',
+    'You must specify either -a/--all-zones or at least one of the other',
+    'scope arguments.  -a/--all-zones cannot be combined with the other',
+    'arguments.  The other arguments can be combined, and the result is to',
+    'operate on zones matching all of the specified criteria.  For example:',
+    '',
+    '    manta-oneach --compute-node MS08214 --service storage COMMAND',
+    '',
+    'executes COMMAND on on all "storage" zones on compute node MS08214.',
+    '',
+    'You can use --global-zones to operate on the global zones hosting ',
+    'the zones that would otherwise have been matched.  For example:',
+    '',
+    '    manta-oneach --global-zones --service=webapi COMMAND',
+    '',
+    'executes COMMAND in the global zones of all compute nodes containing at ',
+    'least one "webapi" zone.'
 ].join('\n');
 
 var mzOptionStr = [
