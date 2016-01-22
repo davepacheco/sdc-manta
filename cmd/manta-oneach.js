@@ -64,12 +64,16 @@ var mzUsageMessage = [
     '    -c | --concurrency N                 number of operations to allow ',
     '                                         outstanding at any given time',
     '',
+    '    -I | --immediate                     emit results as they arrive, ',
+    '                                         rather than sorted at the end',
+    '',
     '    -J | --jsonstream                    emit newline-separated JSON',
     '                                         output, similar to ',
     '                                         sdc-oneachnode(1), but with ',
     '                                         additional "zonename" and ',
     '                                         "service" properties (unless ',
-    '                                         --global-zones was specified)',
+    '                                         --global-zones was specified).',
+    '                                         Implies --immediate.',
     '',
     '    -n | --dry-run                       report what would be executed ',
     '                                         without actually running it',
@@ -115,6 +119,7 @@ var mzOptionStr = [
     'n(dry-run)',
     's:(service)',
     'z:(zonename)',
+    'I(immediate)',
     'J(jsonstream)',
     'S:(compute-node)',
     'T:(exectimeout)'
@@ -169,7 +174,9 @@ function main()
 
 	exec = new oneach.mzCommandExecutor(args);
 	if (args.outputMode == 'text') {
-		next = new oneach.mzResultToText();
+		next = new oneach.mzResultToText({
+		    'outputBatch': args.outputBatch
+		});
 	} else {
 		assert.equal(args.outputMode, 'jsonstream');
 		next = new oneach.mzResultToJson();
@@ -219,7 +226,8 @@ function mzParseCommandLine(argv)
 	    'execTimeout': mzExecTimeoutDefault,
 	    'execCommand': null,
 
-	    'outputMode': 'text'
+	    'outputMode': 'text',
+	    'outputBatch': true
 	};
 
 	parser = new getopt.BasicParser(mzOptionStr, argv, 0);
@@ -317,6 +325,10 @@ function mzParseCommandLine(argv)
 				    option.optarg));
 			}
 			args.concurrency = p;
+			break;
+
+		case 'I':
+			args.outputBatch = false;
 			break;
 
 		case 'J':
