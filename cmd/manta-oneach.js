@@ -175,7 +175,8 @@ function main()
 	exec = new oneach.mzCommandExecutor(args);
 	if (args.outputMode == 'text') {
 		next = new oneach.mzResultToText({
-		    'outputBatch': args.outputBatch
+		    'outputBatch': args.outputBatch,
+		    'multilineMode': args.multilineMode
 		});
 	} else {
 		assert.equal(args.outputMode, 'jsonstream');
@@ -227,7 +228,8 @@ function mzParseCommandLine(argv)
 	    'execCommand': null,
 
 	    'outputMode': 'text',
-	    'outputBatch': true
+	    'outputBatch': true,
+	    'multilineMode': 'auto'
 	};
 
 	parser = new getopt.BasicParser(mzOptionStr, argv, 0);
@@ -328,6 +330,7 @@ function mzParseCommandLine(argv)
 			break;
 
 		case 'I':
+			args.multilineMode = 'multi';
 			args.outputBatch = false;
 			break;
 
