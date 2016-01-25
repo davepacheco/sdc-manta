@@ -78,6 +78,9 @@ var mzUsageMessage = [
     '    -n | --dry-run                       report what would be executed ',
     '                                         without actually running it',
     '',
+    '    -N | --oneline                       report only the last line of ',
+    '                                         output from each command',
+    '',
     '    -T | --exectimeout SECONDS           command execution timeout',
     '                                         (same as for sdc-oneachnode(1))',
     '                                         default: 60 seconds',
@@ -121,6 +124,7 @@ var mzOptionStr = [
     'z:(zonename)',
     'I(immediate)',
     'J(jsonstream)',
+    'N(oneline)',
     'S:(compute-node)',
     'T:(exectimeout)'
 ].join('');
@@ -205,6 +209,7 @@ function main()
 function mzParseCommandLine(argv)
 {
 	var parser, option, args, p, err;
+	var multiline = null;
 
 	args = {
 	    'amqpHost': null,
@@ -338,6 +343,10 @@ function mzParseCommandLine(argv)
 			args.outputMode = 'jsonstream';
 			break;
 
+		case 'N':
+			multiline = 'one';
+			break;
+
 		case 'T':
 			p = parseInt(option.optarg, 10);
 			if (isNaN(p) || p <= 0) {
@@ -354,6 +363,14 @@ function mzParseCommandLine(argv)
 			assert.equal('?', option.option);
 			return (null);
 		}
+	}
+
+	/*
+	 * The --oneline option overrides the implied semantics of --immediate,
+	 * regardless of the order in which they were specified.
+	 */
+	if (multiline == 'one') {
+		args.multilineMode = 'one';
 	}
 
 	if (parser.optind() >= argv.length) {
