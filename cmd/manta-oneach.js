@@ -179,6 +179,7 @@ function main()
 	exec = new oneach.mzCommandExecutor(args);
 	if (args.outputMode == 'text') {
 		next = new oneach.mzResultToText({
+		    'omitHeader': args.omitHeader,
 		    'outputBatch': args.outputBatch,
 		    'multilineMode': args.multilineMode
 		});
@@ -232,6 +233,7 @@ function mzParseCommandLine(argv)
 	    'execTimeout': mzExecTimeoutDefault,
 	    'execCommand': null,
 
+	    'omitHeader': false,
 	    'outputMode': 'text',
 	    'outputBatch': true,
 	    'multilineMode': 'auto'
