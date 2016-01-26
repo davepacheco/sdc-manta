@@ -13,6 +13,11 @@
 #
 
 #
+# Programs
+#
+CATEST		 = deps/catest/catest
+
+#
 # Files
 #
 BASHSTYLE	 = $(NODE) tools/bashstyle
@@ -66,10 +71,10 @@ all: $(SMF_MANIFESTS) deps sdc-scripts
 check:: $(NODE_EXEC)
 
 .PHONY: test
-test: all
-	$(NODE) test/tst.adm.js || echo "TEST FAILED"
-	$(NODE) test/tst.zk.js  || echo "TEST FAILED"
-	$(NODE) test/tst.oneach_cli.js  || echo "TEST FAILED"
+test: | $(CATEST)
+	$(CATEST) -a
+
+$(CATEST): deps/catest/.git
 
 .PHONY: deps
 deps: | $(REPO_DEPS) $(NPM_EXEC)
