@@ -27,7 +27,7 @@
         "sprintf-js": "0.0.7",
         "tab": "0.1.0",
         "urclient": "git+ssh://git@github.com/joyent/node-urclient.git#TOOLS-1308",
-        "vasync": "1.4.3",
+        "vasync": "1.6.3",
         "verror": "1.3.7",
         "zonename": "1.1.0"
     }
