@@ -20,6 +20,7 @@ var assert = require('assert');
 var bunyan = require('bunyan');
 var cmdln = require('cmdln');
 var cmdutil = require('cmdutil');
+var forkexec = require('forkexec');
 var getopt = require('posix-getopt');
 var jsprim = require('jsprim');
 var path = require('path');
@@ -49,15 +50,33 @@ var mzUsageMessage = [
     '    -S | --compute-node HOSTNAME|UUID... zones on named compute node',
     '    -s | --service SERVICE...            zones of SAPI service SERVICE',
     '    -z | --zonename ZONENAME...          specified zones only',
-    '    -g | --global-zones                  operate on global zones of ',
+    '    -G | --global-zones                  operate on global zones of ',
     '                                         whichever zones would otherwise',
     '                                         have been operated on',
     '',
     'OPERATION ARGUMENTS',
     '',
-    '    The only supported operation argument is a single string argument',
-    '    identifying the command to execute in each zone.  The command may',
-    '    be an arbitrary bash script.',
+    '    Command execution: OPERATION_ARGUMENTS consists of a single string ',
+    '    argument containing an arbitrary bash script to execute in each zone.',
+    '',
+    '    File transfer: Either the -p/--put or -g/--get option must be ',
+    '    specified, plus the -d/--dir option.  The -X/--clobber option may ',
+    '    also be used.',
+    '',
+    '    -g | --get FILE                      causes the remote target to ',
+    '                                         fetch the local file FILE ',
+    '                                         into the remote directory ',
+    '                                         specified with --dir.',
+    '',
+    '    -p | --put FILE                      causes the remote target to ',
+    '                                         upload the remote file FILE ',
+    '                                         into the local directory ',
+    '                                         specified with --dir.',
+    '',
+    '    -d | --dir DIR                       see --get and --put',
+    '',
+    '    -X | --clobber                       allow --get to overwrite an',
+    '                                         existing local file.',
     '',
     'OTHER OPTIONS',
     '',
@@ -109,6 +128,10 @@ var mzUsageMessage = [
     'least one "webapi" zone.'
 ].join('\n');
 
+/*
+ * The short option letters for the AMQP options are not documented and not
+ * intended to be used.
+ */
 var mzOptionStr = [
     'A:(amqp-host)',
     'B:(amqp-password)',
@@ -118,15 +141,19 @@ var mzOptionStr = [
 
     'a(all-zones)',
     'c(concurrency)',
-    'g(global-zones)',
+    'd:(dir)',
+    'g:(get)',
+    'G(global-zones)',
     'n(dry-run)',
+    'p:(put)',
     's:(service)',
     'z:(zonename)',
     'I(immediate)',
     'J(jsonstream)',
     'N(oneline)',
     'S:(compute-node)',
-    'T:(exectimeout)'
+    'T:(exectimeout)',
+    'X(clobber)'
 ].join('');
 
 /*
@@ -230,8 +257,13 @@ function mzParseCommandLine(argv)
 	    'dryRun': false,
 	    'streamStatus': process.stderr,
 
+	    'execMode': oneach.MZ_EM_COMMAND,
 	    'execTimeout': mzExecTimeoutDefault,
 	    'execCommand': null,
+	    'execFile': null,
+	    'execDirectory': null,
+	    'execClobber': null,
+	    'bindIp': null,
 
 	    'omitHeader': false,
 	    'outputMode': 'text',
@@ -288,10 +320,6 @@ function mzParseCommandLine(argv)
 			args.scopeAllZones = true;
 			break;
 
-		case 'g':
-			args.scopeGlobalZones = true;
-			break;
-
 		case 'n':
 			args.dryRun = true;
 			break;
@@ -311,6 +339,10 @@ function mzParseCommandLine(argv)
 			}
 			args.scopeZones = appendCommaSeparatedList(
 			    args.scopeZones, option.optarg);
+			break;
+
+		case 'G':
+			args.scopeGlobalZones = true;
 			break;
 
 		case 'S':
@@ -334,6 +366,29 @@ function mzParseCommandLine(argv)
 				    option.optarg));
 			}
 			args.concurrency = p;
+			break;
+
+		case 'd':
+			args.execDirectory = option.optarg;
+			break;
+
+		case 'g':
+			if (args.execMode != oneach.MZ_EM_COMMAND) {
+				return (new VError('unexpected --get'));
+			}
+			args.execFile = option.optarg;
+			args.execMode = oneach.MZ_EM_SENDTOREMOTE;
+			if (args.execClobber === null) {
+				args.execClobber = false;
+			}
+			break;
+
+		case 'p':
+			if (args.execMode != oneach.MZ_EM_COMMAND) {
+				return (new VError('unexpected --put'));
+			}
+			args.execFile = option.optarg;
+			args.execMode = oneach.MZ_EM_RECEIVEFROMREMOTE;
 			break;
 
 		case 'I':
@@ -360,12 +415,17 @@ function mzParseCommandLine(argv)
 			args.execTimeout = p * 1000;
 			break;
 
+		case 'X':
+			args.execClobber = true;
+			break;
+
 		default:
 			/* error message already emitted by getopt */
 			assert.equal('?', option.option);
 			return (null);
 		}
 	}
+
 
 	/*
 	 * The --oneline option overrides the implied semantics of --immediate,
@@ -375,15 +435,26 @@ function mzParseCommandLine(argv)
 		args.multilineMode = 'one';
 	}
 
-	if (parser.optind() >= argv.length) {
-		return (new Error('expected command'));
-	}
+	if (args.execMode == oneach.MZ_EM_COMMAND) {
+		if (parser.optind() >= argv.length) {
+			return (new Error('expected command'));
+		}
 
-	if (parser.optind() < argv.length - 1) {
-		return (new Error('unexpected arguments'));
-	}
+		if (parser.optind() < argv.length - 1) {
+			return (new Error('unexpected arguments'));
+		}
 
-	args.execCommand = argv[parser.optind()];
+		args.execCommand = argv[parser.optind()];
+	} else {
+		if (parser.optind() < argv.length) {
+			return (new Error('unexpected arguments'));
+		}
+
+		if (args.execDirectory === null) {
+			return (new Error(
+			    '--dir is required with --put and --get'));
+		}
+	}
 
 	/*
 	 * We've checked the syntax of the command-line by this point.  Now

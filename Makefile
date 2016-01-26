@@ -27,9 +27,10 @@ JSON_FILES	 = package.json \
 				manifests \
 				sapi_manifests -name '*.json*')
 JSL_CONF_NODE	 = tools/jsl.node.conf
-JSL_FILES_NODE   = $(JS_FILES)
+JSL_FILES_NODE	 = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS    = -o doxygen
+JSSTYLE_FLAGS	 = -o doxygen
+NPM_ENV		 = MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true"
 
 NODE_PREBUILT_VERSION=v0.10.32
 NODE_PREBUILT_TAG=zone
