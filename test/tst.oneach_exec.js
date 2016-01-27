@@ -36,7 +36,7 @@ var test_cases = [ {
 	'execCommand': 'ls | foo > bar && echo bob'
     },
     'expected_results': {
-	'count': 16,
+	'count': 8,
 	'zone': true,
 	'output': 'in zone'
     }
@@ -69,13 +69,13 @@ var test_cases = [ {
 }, {
     'name': 'basic command on specific CNs',
     'args': {
-	'scopeZones': [ 'zone1', 'zone3', 'zone5', 'zone7' ],
+	'scopeZones': [ 'zone1', 'zone2', 'zone3', 'zone4' ],
 	'scopeComputeNodes': [ 'cn0' ],
 	'execMode': oneach.MZ_EM_COMMAND,
 	'execCommand': 'junk'
     },
     'expected_results': {
-	'count': 3,
+	'count': 2,
 	'zone': true,
 	'output': 'in zone'
     }
@@ -102,10 +102,10 @@ var test_cases = [ {
 	'execCommand': 'echo 288dd530'
     }
 }, {
-    'name': 'no zones matches',
+    'name': 'no zones match',
     'error': /no matching zones found/,
     'args': {
-	'scopeServices': [ 'postgres' ],
+	'scopeServices': [ 'moray' ],
 	'execMode': oneach.MZ_EM_COMMAND,
 	'execCommand': 'date'
     }
@@ -131,7 +131,7 @@ var test_cases = [ {
 	'count': 1,
 	'zone': false,
 	'src_file': '/remote/file/1',
-	'dst_dir': '/local/dir1'
+	'dst_file': '/local/dir1/cn0'
     }
 }, {
     'name': 'GET: global zone',
@@ -146,8 +146,8 @@ var test_cases = [ {
     'expected_results': {
 	'count': 1,
 	'zone': false,
-	'src_file': '/remote/file/1',
-	'dst_dir': '/local/dir1'
+	'src_file': '/local/file/1',
+	'dst_dir': '/remote/dir1'
     }
 }, {
     'name': 'PUT: non-global zone',
@@ -156,16 +156,16 @@ var test_cases = [ {
 	'bindIp': '127.0.0.1',
 	'execMode': oneach.MZ_EM_RECEIVEFROMREMOTE,
 	'execDirectory': '/local/dir1',
-	'execFile': '/zones/zone1/root/remote/file/1'
+	'execFile': '/remote/file/1'
     },
     'expected_results': {
 	'count': 1,
 	'zone': true,
-	'src_file': '/remote/file/1',
-	'dst_dir': '/local/dir1'
+	'src_file': '/zones/zone1/root/remote/file/1',
+	'dst_file': '/local/dir1/zone1'
     }
 }, {
-    'name': 'GET: global zone',
+    'name': 'GET: non-global zone',
     'args': {
 	'scopeZones': [ 'zone1' ],
 	'bindIp': '127.0.0.1',
@@ -176,8 +176,8 @@ var test_cases = [ {
     'expected_results': {
 	'count': 1,
 	'zone': true,
-	'src_file': '/zones/zone1/root/remote/file/1',
-	'dst_dir': '/local/dir1'
+	'dst_dir': '/zones/zone1/root/remote/dir1',
+	'src_file': '/local/file/1'
     }
 } ];
 
@@ -249,7 +249,9 @@ function runTestCase(testcase, callback)
 
 function finishTest(testcase, exec, error, results, callback)
 {
-	var mock = exec.ce_urclient;
+	var mock, expected;
+	
+	mock = exec.ce_urclient;
 	assertplus.ok((error !== null && mock === null) ||
 	    mock instanceof MockUrClient);
 
@@ -279,7 +281,60 @@ function finishTest(testcase, exec, error, results, callback)
 		return;
 	}
 
-	/* XXX implement the most common cases */
+	expected = testcase['expected_results'];
+	assertplus.equal(expected['count'], results.length);
+	assertplus.equal(expected['count'], mock.muc_calls.length);
+
+	if (expected['output']) {
+		/*
+		 * The expected results describe command output.  In that case,
+		 * the only commands the mock Ur should have seen were exec's,
+		 * we should have the expected number of results, and those
+		 * results' output should reflect whether we expected in-zone
+		 * output or global zone output.
+		 */
+		mock.muc_calls.forEach(function (c) {
+			assertplus.equal(c.method, 'exec');
+		});
+
+		results.forEach(function (r) {
+			assertplus.ok(r['uuid']);
+			assertplus.ok(r['hostname']);
+			if (expected['zone']) {
+				assertplus.ok(r['zonename']);
+				assertplus.ok(r['service'] == 'webapi' ||
+				    r['service'] == 'postgres');
+				assertplus.equal(
+				    r['result']['stdout'], 'in zone');
+			} else {
+				assertplus.ok(!r['zonename']);
+				assertplus.ok(!r['service']);
+				assertplus.equal(r['result']['stdout'],
+				    'global zone');
+			}
+
+			assertplus.equal(r['result']['exit_status'], 0);
+			assertplus.equal(r['result']['stderr'].length, 0);
+		});
+
+		nexecuted++;
+		callback();
+		return;
+	}
+
+	/*
+	 * The expected results describe a file transfer.  Check that the
+	 * src_file, dst_file, and dst_dir properties were specified
+	 * appropriately.
+	 */
+	mock.muc_calls.forEach(function (c) {
+		assertplus.equal(c.method,
+		    testcase['args']['execMode'] ==
+		    oneach.MZ_EM_RECEIVEFROMREMOTE ? 'recv_file' : 'send_file');
+		assertplus.equal(c.args.src_file, expected['src_file']);
+		assertplus.equal(c.args.dst_dir, expected['dst_dir']);
+		assertplus.equal(c.args.dst_file, expected['dst_file']);
+	});
 	nexecuted++;
 	callback();
 }
@@ -308,7 +363,7 @@ MockUrClient.prototype.send_file = function (args, callback)
 	    'args': args
 	});
 
-	setImmediate(callback, {
+	setImmediate(callback, null, {
 	    'exit_status': 0,
 	    'stdout': 'ok',
 	    'stderr': ''
@@ -322,7 +377,7 @@ MockUrClient.prototype.recv_file = function (args, callback)
 	    'args': args
 	});
 
-	setImmediate(callback, {
+	setImmediate(callback, null, {
 	    'exit_status': 0,
 	    'stdout': 'ok',
 	    'stderr': ''
@@ -339,7 +394,7 @@ MockUrClient.prototype.exec = function (args, callback)
 	});
 
 	iszone = args['script'].indexOf('zlogin') != -1;
-	setImmediate(callback, {
+	setImmediate(callback, null, {
 	    'exit_status': 0,
 	    'stdout': iszone ? 'in zone' : 'global zone',
 	    'stderr': ''
@@ -358,21 +413,23 @@ MockUrClient.prototype.close = function ()
 function setupMockManta(_, callback)
 {
 	var fakeDeployedTopology;
-	var i, zoneid, cnid;
+	var i, zoneid, cnid, svcid;
 
 	fakeDeployedTopology = {};
 	fakeDeployedTopology.app = {};
 	fakeDeployedTopology.app.name = 'manta';
 	fakeDeployedTopology.services = {
-	    'svc001': { 'name': 'webapi' }
+	    'svc001': { 'name': 'webapi' },
+	    'svc002': { 'name': 'postgres' }
 	};
-	fakeDeployedTopology.instances = { 'svc001': [] };
+	fakeDeployedTopology.instances = { 'svc001': [], 'svc002': [] };
 	fakeDeployedTopology.vms = {};
 
 	for (i = 0; i < 8; i++) {
 		zoneid = 'zone' + (i + 1);
 		cnid = 'cn' + (i % 2);
-		fakeDeployedTopology.instances['svc001'].push({
+		svcid = (zoneid == 'zone5' ? 'svc002' : 'svc001');
+		fakeDeployedTopology.instances[svcid].push({
 		    'uuid': zoneid,
 		    'params': { 'server_uuid': cnid },
 		    'metadata': { 'SHARD': '1', 'DATACENTER': 'test' }
