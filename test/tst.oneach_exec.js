@@ -110,6 +110,22 @@ var test_cases = [ {
 	'execCommand': 'date'
     }
 }, {
+    'name': 'bad service name',
+    'error': /unsupported service: "devnullapi"/,
+    'args': {
+	'scopeServices': [ 'devnullapi' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'date'
+    }
+}, {
+    'name': 'marlin zones explicitly disallowed',
+    'error': /unsupported service: "marlin"/,
+    'args': {
+	'scopeServices': [ 'marlin' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'date'
+    }
+}, {
     'name': 'bad zonename',
     'error': /unknown zonename: zone123456789/,
     'args': {
@@ -420,15 +436,29 @@ function setupMockManta(_, callback)
 	fakeDeployedTopology.app.name = 'manta';
 	fakeDeployedTopology.services = {
 	    'svc001': { 'name': 'webapi' },
-	    'svc002': { 'name': 'postgres' }
+	    'svc002': { 'name': 'postgres' },
+	    'svc003': { 'name': 'marlin' }
 	};
-	fakeDeployedTopology.instances = { 'svc001': [], 'svc002': [] };
+	fakeDeployedTopology.instances = {
+	    'svc001': [],
+	    'svc002': [],
+	    'svc003': []
+	};
 	fakeDeployedTopology.vms = {};
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 9; i++) {
 		zoneid = 'zone' + (i + 1);
 		cnid = 'cn' + (i % 2);
-		svcid = (zoneid == 'zone5' ? 'svc002' : 'svc001');
+
+		/*
+		 * zone5 is put in service "svc002" in order to test service
+		 * filtering.  zone8 is put in service "svc003", but it should
+		 * never be used for anything because "svc003" is "marlin",
+		 * which is explicitly disallowed.  All other zones are in
+		 * "svc001".
+		 */
+		svcid = (zoneid == 'zone5' ? 'svc002' :
+		    zoneid == 'zone8' ? 'svc003' : 'svc001');
 		fakeDeployedTopology.instances[svcid].push({
 		    'uuid': zoneid,
 		    'params': { 'server_uuid': cnid },
