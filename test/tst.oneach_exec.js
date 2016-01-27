@@ -111,6 +111,7 @@ var test_cases = [ {
     }
 }, {
     'name': 'bad service name',
+    /* JSSTYLED */
     'error': /unsupported service: "devnullapi"/,
     'args': {
 	'scopeServices': [ 'devnullapi' ],
@@ -119,6 +120,7 @@ var test_cases = [ {
     }
 }, {
     'name': 'marlin zones explicitly disallowed',
+    /* JSSTYLED */
     'error': /unsupported service: "marlin"/,
     'args': {
 	'scopeServices': [ 'marlin' ],
@@ -266,7 +268,7 @@ function runTestCase(testcase, callback)
 function finishTest(testcase, exec, error, results, callback)
 {
 	var mock, expected;
-	
+
 	mock = exec.ce_urclient;
 	assertplus.ok((error !== null && mock === null) ||
 	    mock instanceof MockUrClient);
