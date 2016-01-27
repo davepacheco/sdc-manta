@@ -9,205 +9,395 @@
  */
 
 /*
- * tst.oneach_exec.js: integration test that actually runs the "manta-oneach"
- * command to test basic cases.  Much of the underlying functionality is tested
- * by unit tests, so this is mostly a smoke test for the tool itself.
+ * tst.oneach_exec.js: unit test for mzCommandExecutor.  We mock out the Ur
+ * client and load a fake deployment into the MantaAdm client and make sure that
+ * the command executor does the right things.  This test is not as exhaustive
+ * as it could be.
  */
 
-var assert = require('assert');
+var assertplus = require('assert-plus');
+var bunyan = require('bunyan');
 var cmdutil = require('cmdutil');
 var forkexec = require('forkexec');
+var jsprim = require('jsprim');
 var path = require('path');
 var vasync = require('vasync');
 var VError = require('verror').VError;
 
-var execname = path.join(__dirname, '../bin/manta-oneach');
-var nstarted = 0;
-var ndone = 0;
+var madm = require('../lib/adm');
+var oneach = require('../lib/oneach/oneach');
+var testcommon = require('./common');
+
+var test_cases = [ {
+    'name': 'complex command on all zones',
+    'args': {
+	'scopeAllZones': true,
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'ls | foo > bar && echo bob'
+    },
+    'expected_results': {
+	'count': 16,
+	'zone': true,
+	'output': 'in zone'
+    }
+}, {
+    'name': 'basic command in all global zones',
+    'args': {
+	'scopeAllZones': true,
+	'scopeGlobalZones': true,
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'junk'
+    },
+    'expected_results': {
+	'count': 2,
+	'zone': false,
+	'output': 'global zone'
+    }
+}, {
+    'name': 'basic command in specific zones and services',
+    'args': {
+	'scopeZones': [ 'zone1', 'zone3', 'zone5' ],
+	'scopeServices': [ 'webapi' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'junk'
+    },
+    'expected_results': {
+	'count': 2,
+	'zone': true,
+	'output': 'in zone'
+    }
+}, {
+    'name': 'basic command on specific CNs',
+    'args': {
+	'scopeZones': [ 'zone1', 'zone3', 'zone5', 'zone7' ],
+	'scopeComputeNodes': [ 'cn0' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'junk'
+    },
+    'expected_results': {
+	'count': 3,
+	'zone': true,
+	'output': 'in zone'
+    }
+}, {
+    'name': 'basic command in GZ for specific services',
+    'args': {
+	'scopeZones': [ 'zone1', 'zone3', 'zone5' ],
+	'scopeServices': [ 'webapi' ],
+	'scopeGlobalZones': true,
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'junk'
+    },
+    'expected_results': {
+	'count': 1,
+	'zone': false,
+	'output': 'global zone'
+    }
+}, {
+    'name': 'attempted execution of unsupported command',
+    'error': /unsupported command/,
+    'args': {
+	'scopeZones': [ 'zone1' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'echo 288dd530'
+    }
+}, {
+    'name': 'no zones matches',
+    'error': /no matching zones found/,
+    'args': {
+	'scopeServices': [ 'postgres' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'date'
+    }
+}, {
+    'name': 'bad zonename',
+    'error': /unknown zonename: zone123456789/,
+    'args': {
+	'scopeZones': [ 'zone123456789' ],
+	'execMode': oneach.MZ_EM_COMMAND,
+	'execCommand': 'date'
+    }
+}, {
+    'name': 'PUT: global zone',
+    'args': {
+	'scopeGlobalZones': true,
+	'scopeZones': [ 'zone1' ],
+	'bindIp': '127.0.0.1',
+	'execMode': oneach.MZ_EM_RECEIVEFROMREMOTE,
+	'execDirectory': '/local/dir1',
+	'execFile': '/remote/file/1'
+    },
+    'expected_results': {
+	'count': 1,
+	'zone': false,
+	'src_file': '/remote/file/1',
+	'dst_dir': '/local/dir1'
+    }
+}, {
+    'name': 'GET: global zone',
+    'args': {
+	'scopeGlobalZones': true,
+	'scopeZones': [ 'zone1' ],
+	'bindIp': '127.0.0.1',
+	'execMode': oneach.MZ_EM_SENDTOREMOTE,
+	'execDirectory': '/remote/dir1',
+	'execFile': '/local/file/1'
+    },
+    'expected_results': {
+	'count': 1,
+	'zone': false,
+	'src_file': '/remote/file/1',
+	'dst_dir': '/local/dir1'
+    }
+}, {
+    'name': 'PUT: non-global zone',
+    'args': {
+	'scopeZones': [ 'zone1' ],
+	'bindIp': '127.0.0.1',
+	'execMode': oneach.MZ_EM_RECEIVEFROMREMOTE,
+	'execDirectory': '/local/dir1',
+	'execFile': '/zones/zone1/root/remote/file/1'
+    },
+    'expected_results': {
+	'count': 1,
+	'zone': true,
+	'src_file': '/remote/file/1',
+	'dst_dir': '/local/dir1'
+    }
+}, {
+    'name': 'GET: global zone',
+    'args': {
+	'scopeZones': [ 'zone1' ],
+	'bindIp': '127.0.0.1',
+	'execMode': oneach.MZ_EM_SENDTOREMOTE,
+	'execDirectory': '/remote/dir1',
+	'execFile': '/local/file/1'
+    },
+    'expected_results': {
+	'count': 1,
+	'zone': true,
+	'src_file': '/zones/zone1/root/remote/file/1',
+	'dst_dir': '/local/dir1'
+    }
+} ];
+
+var nexecuted = 0;
 
 function main()
 {
-	var testcases = [
-	    testCaseBadScope,
-	    testCaseMissingArg,
-	    testCaseAllZones,
-	    testCaseGlobalZonesJson,
-	    testCaseFilter
-	];
+	var done = false;
 
-	vasync.waterfall(testcases, function (err) {
+	vasync.forEachPipeline({
+	    'inputs': test_cases,
+	    'func': runTestCase
+	}, function (err) {
 		if (err) {
 			cmdutil.fail(err);
 		}
 
-		assert.equal(nstarted, testcases.length);
-		assert.equal(nstarted, ndone);
+		assertplus.equal(nexecuted, test_cases.length);
+		console.error('done (%d executed)', nexecuted);
+		done = true;
+	});
+
+	process.on('exit', function (code) {
+		if (code === 0) {
+			assertplus.ok(done, 'premature exit');
+		}
 	});
 }
 
-function assertNoError(name, err)
+function runTestCase(testcase, callback)
 {
-	if (err) {
-		cmdutil.fail(new VError(err,
-		    'test case "%s": unexpected error', name));
+	var exec, args, results;
+
+	console.error('test case: %s', testcase['name']);
+
+	/*
+	 * Set up the command executor.
+	 */
+	args = testcommon.defaultCommandExecutorArgs();
+	jsprim.forEachKey(testcase['args'], function (k, v) { args[k] = v; });
+	args.streamStatus = process.stderr;
+	args.log = new bunyan({
+	    'name': 'tst.oneach_exec.js',
+	    'level': process.env['LOG_LEVEL'] || 'fatal'
+	});
+
+	results = [];
+	exec = new oneach.mzCommandExecutor(args);
+
+	/*
+	 * Monkey-patch the command executor to use our mocks.
+	 */
+	assertplus.func(exec.stageSetupUr);
+	exec.stageSetupUr = setupMockUr;
+	assertplus.func(exec.stageSetupManta);
+	exec.stageSetupManta = setupMockManta;
+
+	/*
+	 * Record all the results as it executes.
+	 */
+	exec.on('data', function (c) { results.push(c); });
+	exec.on('error', function (err) {
+		finishTest(testcase, exec, err, results, callback);
+	});
+	exec.on('end', function () {
+		finishTest(testcase, exec, null, results, callback);
+	});
+}
+
+function finishTest(testcase, exec, error, results, callback)
+{
+	var mock = exec.ce_urclient;
+	assertplus.ok((error !== null && mock === null) ||
+	    mock instanceof MockUrClient);
+
+	if (testcase['error']) {
+		nexecuted++;
+
+		if (error === null) {
+			console.error('expected error: ', testcase['error']);
+			console.error('found no error');
+			callback(new VError('missing expected error'));
+		} else if (!testcase['error'].test(error.message)) {
+			console.error('expected error: ', testcase['error']);
+			console.error('found error: ', error.message);
+			callback(new VError('wrong error'));
+		} else {
+			callback();
+		}
+
+		return;
 	}
-}
 
-function assertEmptyStderr(name, result)
-{
-	if (result['stderr'].length !== 0) {
-		cmdutil.fail(new VError(
-		    'test case "%s": expected empty stderr, found:\n%s\n',
-		    name, result['stderr']));
+	if (error !== null) {
+		nexecuted++;
+		console.error('expected no error, but found one');
+		console.error('found error: ', error);
+		callback(new VError('unexpected error'));
+		return;
 	}
-}
 
-function testCaseStart(name)
-{
-	console.error('test case: %s', name);
-	nstarted++;
-}
-
-/*
- * Test case: invalid combination of scopes
- */
-function testCaseBadScope(callback)
-{
-	var name = 'manta-oneach -a -z asdf date';
-
-	testCaseStart(name);
-	forkexec.forkExecWait({
-	    'argv': [ process.execPath, execname, '-a', '-z', 'asdf', 'date' ]
-	}, function (err, result) {
-		assert.ok(err);
-		assert.equal(result['status'], 2);
-		assert.ok(new RegExp('^manta-oneach: cannot specify zones' +
-		    '.*when all zones were requested').test(result['stderr']));
-		ndone++;
-		callback();
-	});
+	/* XXX implement the most common cases */
+	nexecuted++;
+	callback();
 }
 
 
 /*
- * Test case: node-getopt error
+ * Our mock Ur client records the methods that were called and responds with an
+ * appropriate success response.
  */
-function testCaseMissingArg(callback)
+function setupMockUr(_, callback)
 {
-	var name = 'manta-oneach -z';
-
-	testCaseStart(name);
-	forkexec.forkExecWait({
-	    'argv': [ process.execPath, execname, '-z' ]
-	}, function (err, result) {
-		assert.ok(err);
-		assert.equal(result['status'], 2);
-		assert.ok(/^option requires an argument -- z/.test(
-		    result['stderr']));
-		ndone++;
-		callback();
-	});
+	assertplus.ok(this.ce_urclient === null);
+	this.ce_urclient = new MockUrClient();
+	setImmediate(callback);
 }
 
-/*
- * Test case: sample output from all zones.
- */
-function testCaseAllZones(callback)
+function MockUrClient()
 {
-	var name = 'manta-oneach -a zonename';
-
-	testCaseStart(name);
-	forkexec.forkExecWait({
-	    'argv': [ process.execPath, execname, '-a', 'zonename' ]
-	}, function (err, result) {
-		assertNoError(name, err);
-		assertEmptyStderr(name, result);
-
-		var lines, i, parts;
-		lines = result.stdout.split('\n');
-		assert.ok(lines[lines.length - 1].length === 0,
-		    'last line of output should have been empty');
-		/* Skip header line and last (blank) line. */
-		for (i = 1; i < lines.length - 1; i++) {
-			parts = lines[i].split(/\s+/);
-			assert.equal(parts.length, 3,
-			    'line ' + (i + 1) + ' garbled');
-			assert.equal(parts[1], parts[2].substr(0, 8));
-		}
-
-		ndone++;
-		callback();
-	});
+	this.muc_calls = [];
 }
 
-/*
- * Test case: using global zones
- */
-function testCaseGlobalZonesJson(callback)
+MockUrClient.prototype.send_file = function (args, callback)
 {
-	var name = 'manta-oneach -GJa "sysinfo | json UUID"';
-
-	testCaseStart(name);
-	forkexec.forkExecWait({
-	    'argv': [ process.execPath, execname, '-GJa',
-	        'sysinfo | json UUID' ]
-	}, function (err, result) {
-		assertNoError(name, err);
-		assertEmptyStderr(name, result);
-
-		var lines, i, parsed;
-		lines = result.stdout.split('\n');
-		assert.ok(lines[lines.length - 1].length === 0,
-		    'last line of output should have been empty');
-
-		/* Skip the last (blank) line. */
-		for (i = 1; i < lines.length - 1; i++) {
-			parsed = JSON.parse(lines[i]);
-			assert.ok(parsed['uuid']);
-			assert.equal(parsed['uuid'] + '\n',
-			    parsed['result']['stdout']);
-			assert.equal(parsed['result']['exit_status'], 0);
-			assert.equal(parsed['result']['stderr'], '');
-			assert.ok(parsed['hostname']);
-		}
-
-		ndone++;
-		callback();
+	this.muc_calls.push({
+	    'method': 'send_file',
+	    'args': args
 	});
-}
+
+	setImmediate(callback, {
+	    'exit_status': 0,
+	    'stdout': 'ok',
+	    'stderr': ''
+	});
+};
+
+MockUrClient.prototype.recv_file = function (args, callback)
+{
+	this.muc_calls.push({
+	    'method': 'recv_file',
+	    'args': args
+	});
+
+	setImmediate(callback, {
+	    'exit_status': 0,
+	    'stdout': 'ok',
+	    'stderr': ''
+	});
+};
+
+MockUrClient.prototype.exec = function (args, callback)
+{
+	var iszone;
+
+	this.muc_calls.push({
+	    'method': 'exec',
+	    'args': args
+	});
+
+	iszone = args['script'].indexOf('zlogin') != -1;
+	setImmediate(callback, {
+	    'exit_status': 0,
+	    'stdout': iszone ? 'in zone' : 'global zone',
+	    'stderr': ''
+	});
+};
+
+MockUrClient.prototype.close = function ()
+{
+};
+
 
 /*
- * Test case: filtering zones
+ * Our "mock" MantaAdm client is just a normal client with a fake topology
+ * loaded.
  */
-function testCaseFilter(callback)
+function setupMockManta(_, callback)
 {
-	var name = 'manta-oneach -s postgres "svcs -H -o fmri manatee-sitter"';
+	var fakeDeployedTopology;
+	var i, zoneid, cnid;
 
-	testCaseStart(name);
-	forkexec.forkExecWait({
-	    'argv': [ process.execPath, execname, '-s', 'postgres',
-	        'svcs -H -o fmri manatee-sitter' ]
-	}, function (err, result) {
-		assertNoError(name, err);
-		assertEmptyStderr(name, result);
+	fakeDeployedTopology = {};
+	fakeDeployedTopology.app = {};
+	fakeDeployedTopology.app.name = 'manta';
+	fakeDeployedTopology.services = {
+	    'svc001': { 'name': 'webapi' }
+	};
+	fakeDeployedTopology.instances = { 'svc001': [] };
+	fakeDeployedTopology.vms = {};
 
-		var lines, i, parts;
-		lines = result.stdout.split('\n');
-		assert.ok(lines[lines.length - 1].length === 0,
-		    'last line of output should have been empty');
-		/* Skip header line and last (blank) line. */
-		for (i = 1; i < lines.length - 1; i++) {
-			parts = lines[i].split(/\s+/);
-			assert.equal(parts.length, 3,
-			    'line ' + (i + 1) + ' garbled');
-			assert.equal(parts[0], 'postgres');
-			assert.equal(parts[2],
-			    'svc:/manta/application/manatee-sitter:default');
-		}
+	for (i = 0; i < 8; i++) {
+		zoneid = 'zone' + (i + 1);
+		cnid = 'cn' + (i % 2);
+		fakeDeployedTopology.instances['svc001'].push({
+		    'uuid': zoneid,
+		    'params': { 'server_uuid': cnid },
+		    'metadata': { 'SHARD': '1', 'DATACENTER': 'test' }
+		});
+		fakeDeployedTopology.vms[zoneid] = {
+		    'nics': [ {
+			'primary': true,
+			'ip': '10.0.0.' + (i + 1)
+		    } ]
+		};
+	}
 
-		ndone++;
-		callback();
-	});
+	fakeDeployedTopology.cns = {};
+	fakeDeployedTopology.cns['cn0'] = {
+	    'datacenter': 'test',
+	    'hostname': 'CN0',
+	    'server_uuid': 'CN0',
+	    'sysinfo': { 'Network Interfaces': {} }
+	};
+
+	assertplus.ok(this.ce_manta === null);
+	this.ce_manta = new madm.MantaAdm(
+	    this.ce_log.child({ 'component': 'MantaAdm' }));
+	this.ce_manta.loadFakeDeployed(fakeDeployedTopology);
+	setImmediate(callback);
 }
 
 main();
