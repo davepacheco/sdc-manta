@@ -481,6 +481,12 @@ function setupMockManta(_, callback)
 	    'server_uuid': 'CN0',
 	    'sysinfo': { 'Network Interfaces': {} }
 	};
+	fakeDeployedTopology.cns['cn1'] = {
+	    'datacenter': 'test',
+	    'hostname': 'CN1',
+	    'server_uuid': 'CN1',
+	    'sysinfo': { 'Network Interfaces': {} }
+	};
 
 	assertplus.ok(this.ce_manta === null);
 	this.ce_manta = new madm.MantaAdm(
