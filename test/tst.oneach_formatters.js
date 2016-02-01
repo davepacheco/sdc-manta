@@ -33,6 +33,17 @@ var event_sets = {
 	    'stderr': ''
 	}
     } ],
+    'auto-multiline-stderr': [ {
+	'uuid': 'my_uuid',
+	'hostname': 'garbage',
+	'zonename': 'chunkify',
+	'service': 'webapi',
+	'result': {
+	    'exit_status': 1,
+	    'stdout': 'hello world\n',
+	    'stderr': 'line one\nline two\nline three\n'
+	}
+    } ],
     'auto-multiline': [ {
 	'uuid': 'my_uuid',
 	'hostname': 'garbage',
@@ -68,6 +79,9 @@ var event_sets = {
 
 var test_cases = [ {
     'event_set': 'empty',
+    'formatter': new oneach.mzResultToJson()
+}, {
+    'event_set': 'auto-multiline-stderr',
     'formatter': new oneach.mzResultToJson()
 }, {
     'event_set': 'auto-multiline',
@@ -106,6 +120,13 @@ var test_cases = [ {
 	'omitHeader': false,
 	'outputBatch': true,
 	'multilineMode': 'one'
+    })
+}, {
+    'event_set': 'auto-multiline-stderr',
+    'formatter': new oneach.mzResultToText({
+	'omitHeader': false,
+	'outputBatch': true,
+	'multilineMode': 'auto'
     })
 }, {
     'event_set': 'auto-multiline',
