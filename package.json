@@ -26,7 +26,7 @@
         "sdc-clients": "git+ssh://git@github.com:joyent/node-sdc-clients.git#42ea07d3ca",
         "sprintf-js": "0.0.7",
         "tab": "0.1.0",
-        "urclient": "git+ssh://git@github.com/joyent/node-urclient.git#TOOLS-1308",
+        "urclient": "1.0.0",
         "vasync": "1.6.3",
         "verror": "1.3.7",
         "zonename": "1.1.0"
