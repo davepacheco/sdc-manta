@@ -82,7 +82,7 @@ var mzUsageMessage = [
     '                                         --global-zones was specified).',
     '                                         Implies --immediate.',
     '',
-    '    -n | --dry-run                       report what would be executed ',
+    '    --dry-run                            report what would be executed ',
     '                                         without actually running it',
     '',
     '    -N | --oneline                       report only the last line of ',

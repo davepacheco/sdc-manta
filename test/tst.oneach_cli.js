@@ -170,11 +170,10 @@ var test_cases = [
 /* Working examples: exercising miscellaneous options */
 {
     'name': 'miscellaneous short options and a complex bash script',
-    'argv': [ '-c', '3', '-n', '-I', '-J', '-N', '-T', '7', '-X', '-a',
+    'argv': [ '-c', '3', '-I', '-J', '-N', '-T', '7', '-X', '-a',
 	'date && foo > bar & sleep 3 < /dev/null' ],
     'checkFields': {
 	'concurrency': 3,
-	'dryRun': true,
 	'outputBatch': false,
 	'outputMode': 'jsonstream',
 	'multilineMode': 'one',
