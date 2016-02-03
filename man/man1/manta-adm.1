@@ -12,7 +12,7 @@ manta\-adm \- administer a Manta deployment
 .PP
 \fB\fCmanta\-adm show [\-l LOG_FILE] [\-js] SERVICE\fR
 .PP
-\fB\fCmanta\-adm update [\-l LOG_FILE] [\-n] [\-y] [\-\-no\-reprovision] FILTER\fR
+\fB\fCmanta\-adm update [\-l LOG_FILE] [\-n] [\-y] [\-\-no\-reprovision] FILE [SERVICE]\fR
 .PP
 \fB\fCmanta\-adm zk list [\-l LOG_FILE] [\-H] [\-o FIELD...]\fR
 .PP
@@ -314,6 +314,171 @@ Example: show only postgres zones in the current datacenter
 # manta\-adm show postgres
 .fi
 .RE
+.SS "update" subcommand
+.PP
+\fB\fCmanta\-adm update [\-l LOG_FILE] [\-n] [\-y] [\-\-no\-reprovision] FILE [SERVICE]\fR
+.PP
+The \fB\fCmanta\-adm update\fR command updates a Manta deployment to match the JSON
+configuration stored at path \fB\fCFILE\fR\&.  The JSON configuration describes the
+precise number of instances that should be deployed for each version (image) of
+each type of service on each server.  The update process will involve some
+number of zone deployments, undeployments, and reprovisions.  For example, if
+there are 3 "webapi" instances deployed of version "X" on a given server and the
+configuration specifies that there should be 1 "webapi" instance at version "Y",
+then one of the existing "webapi" instances will be reprovisioned to version "Y"
+and the others will be removed.
+.PP
+The command automatically manages the sequence and concurrency of updates to
+minimize impact to a running system.  Because running the command always
+compares the current deployment to the one provided in the configuration file,
+it is idempotent.  If there are any failures, you can re\-run \fB\fCmanta\-adm update\fR
+as needed to bring the system to the desired configuration.
+.PP
+\fBThis command is primarily intended for use with stateless services.  Extreme
+care should be taken when using it with stateful services like "postgres" or
+"storage".  See the Manta Operator's Guide for the appropriate procedures for
+upgrading all components.\fP
+.PP
+Options:
+.TP
+\fB\fC\-n, \-\-dryrun\fR
+Print what changes would be made without actually making them.
+.TP
+\fB\fC\-y, \-\-confirm\fR
+Bypass all confirmation prompts.
+.TP
+\fB\fC\-\-no\-reprovision\fR
+When upgrading a zone, always provision a new zone and deprovision the
+previous one, rather than reprovisioning the existing one.
+.PP
+See above for information about the \fB\fC\-l/\-\-log_file\fR option.
+.PP
+If \fB\fCSERVICE\fR is specified, then only instances of the named service are
+changed.
+.PP
+The JSON configuration format consists of an object with several levels of
+properties:
+.nr step0 0 1
+.RS
+.IP \n+[step0]
+Top\-level properties are server uuids.  Everything below a given server uuid
+describes instances deployed on that server.
+.IP \n+[step0]
+The next\-level properties are service names.
+.IP \n+[step0]
+For services that use shards ("postgres" and "moray"), the next\-level
+property names are shard numbers.
+.IP \n+[step0]
+The next\-level property names are image uuids, which describe the specific
+image (version) of zones should be deployed.
+.IP \n+[step0]
+The values at the leafs are integers describing the number of zones for that
+image uuid should be deployed for this service on this server.
+.RE
+.PP
+Here's an example snippet:
+.PP
+.RS
+.nf
+{
+    "44454c4c\-5700\-1047\-8051\-b3c04f585131": {
+        "nameservice": {
+            "59ef6322\-6968\-11e5\-987a\-0bd10a3d6e65": 3
+        },
+        "postgres": {
+            "1": {
+                "0a8692f6\-6968\-11e5\-a997\-3334c877b2f3": 3
+            },
+            "2": {
+                "0a8692f6\-6968\-11e5\-a997\-3334c877b2f3": 3
+            }
+        },
+        ...
+    }
+}
+.fi
+.RE
+.PP
+This configuration denotes that on the server with uuid
+"44454c4c\-5700\-1047\-8051\-b3c04f585131", there should be:
+.RS
+.IP \(bu 2
+three "nameservice" instances using image
+"59ef6322\-6968\-11e5\-987a\-0bd10a3d6e65",
+.IP \(bu 2
+three "postgres" instances in shard 1 using image
+"0a8692f6\-6968\-11e5\-a997\-3334c877b2f3", and
+.IP \(bu 2
+three "postgres" instances in shard 2 using image
+"0a8692f6\-6968\-11e5\-a997\-3334c877b2f3".
+.RE
+.PP
+The starting point for an update operation is usually the output of \fB\fCmanta\-adm
+show \-sj\fR\&.  From that configuration, you can:
+.RS
+.IP \(bu 2
+scale up or down the number of any component by increasing or decreasing the
+counts,
+.IP \(bu 2
+upgrade all instances of a component by changing the image uuid for it, and
+.IP \(bu 2
+perform rolling upgrades by adding a second image uuid for a service with
+count "1", then updating repeatedly with more instances of the second image
+and fewer instances of the first image.
+.RE
+.PP
+subject to the caveats described above for stateful services.
+.PP
+This tool does not provide an interface for undeploying or upgrading specific
+zones by zonename.
+.PP
+Example: update the current deployment to the configuration in \fB\fCnewconfig.json\fR:
+.PP
+.RS
+.nf
+# manta\-adm update newconfig.json
+.fi
+.RE
+.PP
+Example: update only "moray" instances to the configuration in \fB\fCnewconfig.json\fR:
+.PP
+.RS
+.nf
+# manta\-adm update newconfig.json moray
+.fi
+.RE
+.SS "zk" subcommand
+.PP
+\fB\fCmanta\-adm zk list [\-l LOG_FILE] [\-H] [\-o FIELD...]\fR
+.PP
+\fB\fCmanta\-adm zk fixup [\-l LOG_FILE] [\-n] [\-y]\fR
+.PP
+The \fB\fCmanta\-adm zk\fR subcommand provides subcommands for viewing and repairing the
+list of ZooKeeper peers.  The \fB\fCmanta\-adm zk list\fR command reports a tabular view
+of the ZooKeeper servers used for the current Manta deployment.  The \fB\fCmanta\-adm
+zk fixup\fR command compares the ZooKeeper configuration (defined by the
+\fB\fCZK_SERVERS\fR and \fB\fCZK_ID\fR SAPI metadata properties) to the list of deployed
+nameservice zones, reports any discrepancies or other issues, and optionally
+repairs certain kinds of issues.  If repairs are made, only metadata is changed.
+This tool is intended for cases where a ZK server has been undeployed and the
+configuration needs to be updated, or where deployment failed and left stale
+configuration, or other unusual cases where the configuration does not match the
+list of deployed nameservers.
+.PP
+See above for information about the \fB\fC\-l\fR, \fB\fC\-H\fR, and \fB\fC\-o\fR options for
+\fB\fCmanta\-adm zk list\fR\&.  Fields available for use with \fB\fC\-o\fR include "ord" (the
+ordinal number of each server), "datacenter", "zoneabbr", "zonename", "ip", and
+"port".
+.PP
+The \fB\fCmanta\-adm zk fixup\fR command supports options:
+.TP
+\fB\fC\-n, \-\-dryrun\fR
+Print what changes would be made without actually making them.
+.TP
+\fB\fC\-y, \-\-confirm\fR
+Bypass all confirmation prompts.
+.PP
+It also supports the \fB\fC\-l/\-\-log_file\fR option described above.
 .SH EXIT STATUS
 .TP
 \fB\fC0\fR
