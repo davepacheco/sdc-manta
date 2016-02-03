@@ -39,6 +39,18 @@ See the Manta Operator's Guide for information on using these commands.
   Skips confirmations intended to improve reliability of the deployment process.
 
 
+## EXIT STATUS
+
+`0`
+  Success
+
+`1`
+  Generic failure.
+
+`2`
+  The command-line options were not valid.
+
+
 ## COPYRIGHT
 
 Copyright (c) 2016 Joyent Inc.

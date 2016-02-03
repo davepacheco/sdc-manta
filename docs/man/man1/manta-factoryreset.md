@@ -52,6 +52,16 @@ This command does not work in Manta deployments that were initialized with size
   Skips the confirmation prompt.  Be sure this is what you want to do before
   using this option.
 
+
+## EXIT STATUS
+
+`0`
+  Success
+
+Non-zero
+  Generic failure.
+
+
 ## COPYRIGHT
 
 Copyright (c) 2016 Joyent Inc.

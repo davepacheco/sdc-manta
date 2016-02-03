@@ -59,6 +59,16 @@ run this command except as documented in the Manta Operator's Guide.**
 
 See the Manta Operator's Guide.
 
+
+## EXIT STATUS
+
+`0`
+  Success
+
+Non-zero
+  Generic failure.
+
+
 ## COPYRIGHT
 
 Copyright (c) 2016 Joyent Inc.
