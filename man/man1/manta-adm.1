@@ -1,0 +1,142 @@
+.TH MANTA\-ADM 1 "2016" Manta "Manta Operator Commands"
+.SH NAME
+.PP
+manta\-adm \- administer a Manta deployment
+.SH SYNOPSIS
+.PP
+\fB\fCmanta\-adm cn [\-l LOG_FILE] [\-H] [\-o FIELD...] [\-n] [\-s] CN_FILTER\fR
+.PP
+\fB\fCmanta\-adm genconfig "lab" | "coal"\fR
+.PP
+\fB\fCmanta\-adm show [\-l LOG_FILE] [\-a] [\-c] [\-H] [\-o FIELD...] [\-s] FILTER\fR
+.PP
+\fB\fCmanta\-adm show [\-l LOG_FILE] [\-js] FILTER\fR
+.PP
+\fB\fCmanta\-adm update [\-l LOG_FILE] [\-n] [\-y] [\-\-no\-reprovision] FILTER\fR
+.PP
+\fB\fCmanta\-adm zk list [\-l LOG_FILE] [\-H] [\-o FIELD...]\fR
+.PP
+\fB\fCmanta\-adm zk fixup [\-l LOG_FILE] [\-n] [\-y]\fR
+.SH DESCRIPTION
+.PP
+The \fB\fCmanta\-adm\fR command is used to administer various aspects of a Manta
+deployment.  This command only operates on zones within the same datacenter.
+The command may need to be repeated in other datacenters in order to execute it
+across an entire Manta deployment.
+.TP
+\fB\fCmanta\-adm cn\fR
+Show information about Manta servers in this DC.
+.TP
+\fB\fCmanta\-adm genconfig\fR
+Generate a configuration for a COAL or lab deployment.
+.TP
+\fB\fCmanta\-adm show\fR
+Show information about deployed services.
+.TP
+\fB\fCmanta\-adm update\fR
+Update deployment to match a JSON configuration.
+.TP
+\fB\fCmanta\-adm zk\fR
+View and modify ZooKeeper servers configuration.
+.PP
+Many subcommands produce tabular output, with a header row, one data record per
+line, and columns separated by whitespace.  With any of these commands, you can
+use options:
+.TP
+\fB\fC\-H, \-\-omit\-header\fR
+Do not print the header row.
+.TP
+\fB\fC\-o, \-\-columns FIELD[,FIELD...]\fR
+Only print columns named \fB\fCFIELD\fR\&.  You can specify this option multiple times
+or use comma\-separated field names (or both) to select multiple fields.  The
+available field names vary by command and are described in the corresponding
+command section above.
+.PP
+Many commands also accept:
+.TP
+\fB\fC\-l, \-\-log_file LOGFILE\fR
+Emit verbose log to LOGFILE.  The special string "stdout" causes output to be
+emitted to the program's stdout.
+.SS "cn" subcommand
+.PP
+\fB\fCmanta\-adm cn [\-l LOG_FILE] [\-H] [\-o FIELD...] [\-n] [\-s] [CN_FILTER]\fR
+.PP
+The \fB\fCmanta\-adm cn\fR subcommand is used to list SDC compute nodes being used in
+the current Manta deployment in the current datacenter.  The default output is a
+table with one row per compute node.  See above for information on the \fB\fC\-l\fR,
+\fB\fC\-H\fR, and \fB\fC\-o\fR options.
+.TP
+\fB\fC\-n, \-\-oneachnode\fR
+Instead of printing a table, emit a comma\-separated list of matching
+hostnames, suitable for use with 
+.BR sdc-oneachnode (1)'s 
+\fB\fC\-n\fR option.  See also
+.BR manta-oneach (1).
+.TP
+\fB\fC\-s, \-\-storage\-only\fR
+Show only compute nodes with "storage" zones on them.
+.PP
+The optional \fB\fCCN_FILTER\fR string can be used to provide any substring of a
+compute node's hostname, server uuid, administrative IP address, compute id, or
+storage ids.  All matching compute nodes will be reported.
+.PP
+Available fields for the \fB\fC\-o/\-\-columns\fR option include "server_uuid", "host",
+"dc" (the datacenter name), "admin_ip", "ram", "compute_id", "storage_ids",
+and "kind" (which is either "storage" or "other").
+.PP
+Example: list basic info about all Manta CNs in this DC:
+.PP
+.RS
+.nf
+# manta\-adm cn
+.fi
+.RE
+.PP
+Example: list info about Manta CN with server uuid matching 7432ffc8:
+.PP
+.RS
+.nf
+# manta\-adm cn 7432ffc8
+.fi
+.RE
+.PP
+Example: list only storage nodes:
+.PP
+.RS
+.nf
+# manta\-adm cn \-s
+.fi
+.RE
+.PP
+Example: list only the hostnames (and omit the header):
+.PP
+.RS
+.nf
+# manta\-adm cn \-H \-o host
+.fi
+.RE
+.PP
+Example: list hostnames in form suitable for "sdc\-oneachnode \-n":
+.PP
+.RS
+.nf
+# manta\-adm cn \-n
+.fi
+.RE
+.SH EXIT STATUS
+.TP
+\fB\fC0\fR
+Success
+.TP
+\fB\fC1\fR
+Generic failure.
+.TP
+\fB\fC2\fR
+The command\-line options were not valid.
+.SH COPYRIGHT
+.PP
+Copyright (c) 2016 Joyent Inc.
+.SH SEE ALSO
+.PP
+.BR json (1), 
+Manta Operator's Guide
