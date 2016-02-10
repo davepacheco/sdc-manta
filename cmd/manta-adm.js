@@ -23,19 +23,17 @@
  *     			actions
  *
  *     genconfig	generate a configuration suitable for a single-system
- *     			install on either COAL or a lab machine
+ *     			install on COAL or a lab machine or based on a
+ *     			configuration file describing available resources
  *
  *     zk		view and manage configured nameserver instances
- *
- * In the long term, this could be used for initial deployment as well as
- * upgrades (including mass upgrades, as for the Marlin compute zones).  For
- * now, this is a prototype that can be used for the Marlin compute zones.
  *
  * NOTE: this file contains ONLY the CLI wrapper around the real functionality
  * contained in lib/adm.js.  Do NOT add deployment logic here.  It belongs in
  * the library that can eventually be consumed by other tools.
  */
 
+var assertplus = require('assert-plus');
 var bunyan = require('bunyan');
 var cmdln = require('cmdln');
 var cmdutil = require('cmdutil');
@@ -199,17 +197,30 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 	}
 
 	var self = this;
+	var fromfile = opts.from_file;
+
 	this.initAdm(opts, function () {
 		var adm = self.madm_adm;
-		var func = args[0] == 'lab' ?
-		    adm.dumpConfigLab : adm.dumpConfigCoal;
+		var func;
+		var options = {
+		    'outstream': process.stdout
+		};
+
+		if (args[0] == 'lab') {
+			func = adm.dumpConfigLab;
+		} else if (args[0] == 'coal') {
+			func = adm.dumpConfigCoal;
+		} else {
+			assertplus.string(fromfile);
+			func = adm.genconfigFromFile;
+			options['filename'] = fromfile;
+		}
 
 		adm.fetchDeployed(function (err) {
 			if (err)
 				fatal(err.message);
 
-			func.call(adm, process.stdout,
-			    function (serr, nwarnings) {
+			func.call(adm, options, function (serr, nwarnings) {
 				if (serr)
 					fatal(serr.message);
 
@@ -219,20 +230,27 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 					process.exit(nwarnings);
 				}
 				self.finiAdm();
-			    });
+			});
 		});
 	});
 };
 
 MantaAdm.prototype.do_genconfig.help =
-    'Generate a configuration for a COAL or lab deployment.\n' +
+    'Generate a configuration for COAL or lab deployment or for \n' +
+    'a larger deployment.\n' +
     '\n' +
     'Usage:\n' +
     '\n' +
     '    manta-adm genconfig lab\n' +
-    ' or manta-adm genconfig coal\n';
+    ' or manta-adm genconfig coal\n' +
+    ' or manta-adm genconfig --from-file=FILE\n';
 
-MantaAdm.prototype.do_genconfig.options = [];
+MantaAdm.prototype.do_genconfig.options = [ {
+    'names': [ 'from-file' ],
+    'type': 'string',
+    'helpArg': 'FILE',
+    'help': 'Use server descriptions in FILE'
+} ];
 
 /*
  * manta-adm show: shows information about deployed services
