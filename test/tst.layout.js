@@ -51,6 +51,136 @@ var testcases = [ {
 	    mkserver('storage',  1, 0)
 	]
     }, null, '    ')
+}, {
+    'name': 'invalid config: missing value (nshards)',
+    'config': {
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0)
+	]
+    }
+}, {
+    'name': 'invalid config: bad type (nshards)',
+    'config': {
+	'nshards': 3.2,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0)
+	]
+    }
+}, {
+    'name': 'invalid config: bad value (nshards)',
+    'config': {
+	'nshards': -3,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0)
+	]
+    }
+}, {
+    'name': 'invalid config: missing value (servers)',
+    'config': {
+	'nshards': 3
+    }
+}, {
+    'name': 'invalid config: bad type (servers)',
+    'config': {
+	'nshards': 3,
+	'servers': 7
+    }
+}, {
+    'name': 'invalid config: empty list of servers',
+    'config': {
+	'nshards': 3,
+	'servers': []
+    }
+}, {
+    'name': 'invalid config: bad type for server',
+    'config': {
+	'nshards': 3,
+	'servers': [ 'foobar' ]
+    }
+}, {
+    'name': 'invalid config: server property bad value: "type"',
+    'config': {
+	'nshards': 3,
+	'servers': [ { 'type': 'junk' } ]
+    }
+}, {
+    'name': 'invalid config: server property missing ("type")',
+    'config': {
+	'nshards': 3,
+	'servers': [ {} ]
+    }
+}, {
+    'name': 'invalid config: server property missing ("uuid")',
+    'config': {
+	'nshards': 3,
+	'servers': [ { 'type': 'metadata' } ]
+    }
+}, {
+    'name': 'invalid config: server property missing ("memory")',
+    'config': {
+	'nshards': 3,
+	'servers': [ { 'type': 'metadata', 'uuid': 'junkuuid' } ]
+    }
+}, {
+    'name': 'invalid config: bad type for server property ("uuid")',
+    'config': {
+	'nshards': 3,
+	'servers': [ { 'type': 'metadata', 'uuid': 17, 'memory': 3 } ]
+    }
+}, {
+    'name': 'invalid config: bad type for server property ("memory")',
+    'config': {
+	'nshards': 3,
+	'servers': [ { 'type': 'metadata', 'uuid': 'junkuuid', 'memory': {} } ]
+    }
+}, {
+    'name': 'trivial two-system case, 1 shard',
+    'config': {
+	'nshards': 1,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0)
+	]
+    }
+}, {
+    'name': 'trivial two-system case, 3 shards',
+    'config': {
+	'nshards': 1,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0)
+	]
+    }
+}, {
+    'name': '3-rack, 4-shard deployment',
+    'config': {
+	'nshards': 4,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('metadata', 0, 1),
+	    mkserver('metadata', 0, 2),
+	    mkserver('metadata', 0, 3),
+	    mkserver('storage',  0, 0),
+	    mkserver('storage',  0, 1),
+
+	    mkserver('metadata', 1, 0),
+	    mkserver('metadata', 1, 1),
+	    mkserver('metadata', 1, 2),
+	    mkserver('metadata', 1, 3),
+	    mkserver('storage',  1, 0),
+	    mkserver('storage',  1, 1),
+
+	    mkserver('metadata', 2, 0),
+	    mkserver('metadata', 2, 1),
+	    mkserver('metadata', 2, 2),
+	    mkserver('metadata', 2, 3),
+	    mkserver('storage',  2, 0),
+	    mkserver('storage',  2, 1)
+	]
+    }
 } ];
 
 /*
@@ -232,15 +362,23 @@ function runTestCaseLoadDirectly(tcstate, callback)
 {
 	assertplus.ok(!tcstate.tc_testcase.hasOwnProperty('json'));
 	assertplus.object(tcstate.tc_testcase.config);
+
+	console.log('input: %s', JSON.stringify(
+	    tcstate.tc_testcase.config, null, 4));
 	tcstate.tc_loader.loadDirectly({
 	    'config': tcstate.tc_testcase.config
 	}, function (err, dcconfig) {
 		if (err) {
-			callback(err);
+			/*
+			 * See note above in runTestCaseLoadFromFile().
+			 */
+			console.log('ERROR: %s', err.message);
+			tcstate.tc_dcconfig = null;
 		} else {
 			tcstate.tc_dcconfig = dcconfig;
-			callback();
 		}
+
+		callback();
 	});
 }
 
