@@ -30,6 +30,16 @@ var VError = require('verror');
 
 var layout = require('../lib/layout');
 
+/*
+ * Each test case has a "name" and either:
+ *
+ *     json     text string that will be parsed as JSON
+ *
+ *     config   JavaScript object that would be the result of JSON.parse()
+ *
+ * The "json" test cases exercise more code paths, but the "config" ones are
+ * easier to manage here, particularly for more complex cases.
+ */
 var testcases = [ {
     'name': 'invalid config: invalid JSON (unexpected EOF)',
     'json': ''
@@ -137,6 +147,64 @@ var testcases = [ {
 	'servers': [ { 'type': 'metadata', 'uuid': 'junkuuid', 'memory': {} } ]
     }
 }, {
+    'name': 'invalid config: no storage servers',
+    'config': {
+	'nshards': 3,
+	'servers': [ mkserver('metadata', 0, 0) ]
+    }
+}, {
+    'name': 'invalid config: no metadata servers',
+    'config': {
+	'nshards': 3,
+	'servers': [ mkserver('storage', 0, 0) ]
+    }
+}, {
+    'name': 'invalid config: duplicate server',
+    'config': {
+	'nshards': 3,
+	'servers': [
+	    mkserver('metadata', 0, 0),
+	    mkserver('storage',  0, 0),
+	    mkserver('metadata', 0, 0)
+	]
+    }
+}, {
+    'name': 'invalid config: same rack in different AZs',
+    'config': {
+	'nshards': 3,
+	'servers': [ {
+	    'type': 'metadata',
+	    'uuid': 's000',
+	    'rack': 'rack0',
+	    'az': 'az1',
+	    'memory': 128
+	}, {
+	    'type': 'storage',
+	    'uuid': 's001',
+	    'rack': 'rack0',
+	    'az': 'az2',
+	    'memory': 128
+	} ]
+    }
+}, {
+    'name': 'unsupported config: multiple AZs',
+    'config': {
+	'nshards': 3,
+	'servers': [ {
+	    'type': 'metadata',
+	    'uuid': 's000',
+	    'rack': 'rack0',
+	    'az': 'az1',
+	    'memory': 128
+	}, {
+	    'type': 'storage',
+	    'uuid': 's001',
+	    'rack': 'rack1',
+	    'az': 'az2',
+	    'memory': 128
+	} ]
+    }
+}, {
     'name': 'trivial two-system case, 1 shard',
     'config': {
 	'nshards': 1,
@@ -148,7 +216,7 @@ var testcases = [ {
 }, {
     'name': 'trivial two-system case, 3 shards',
     'config': {
-	'nshards': 1,
+	'nshards': 3,
 	'servers': [
 	    mkserver('metadata', 0, 0),
 	    mkserver('storage',  0, 0)
@@ -205,13 +273,6 @@ var images = {
     'marlin': 'MARLIN_IMAGE0'
 };
 
-/*
- * XXX test cases to add:
- * o error cases: no nshards, bad type for nshards, no servers, bad type for
- *   servers, 0 servers, 0 storage servers, 0 metadata servers, missing
- *   properties from server, bad type for properties of server, duplicate
- *   servers, same racks found in different AZ, plus each of the warning cases
- */
 var nrun = 0;
 var separator = '--------------------------------------------------';
 
