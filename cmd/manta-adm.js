@@ -191,13 +191,20 @@ MantaAdm.prototype.do_cn.options = [ {
 
 MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 {
-	if (args.length != 1 || (args[0] != 'lab' && args[0] != 'coal')) {
-		callback(new Error('expected "lab" or "coal"'));
-		return;
-	}
-
 	var self = this;
 	var fromfile = opts.from_file;
+
+	if (fromfile) {
+		if (args.length !== 0) {
+			callback(new Error('unexpected arguments'));
+			return;
+		}
+	} else if (args.length != 1 ||
+	    (args[0] != 'lab' && args[0] != 'coal')) {
+		callback(new Error(
+		    'expected "lab", "coal", or --from-file option'));
+		return;
+	}
 
 	this.initAdm(opts, function () {
 		var adm = self.madm_adm;
@@ -225,9 +232,9 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 					fatal(serr.message);
 
 				if (nwarnings !== 0) {
-					console.error('error: %d services ' +
-					    'were not included', nwarnings);
-					process.exit(nwarnings);
+					console.error('error: bailing out ' +
+					    'because of at least one issue');
+					process.exit(1);
 				}
 				self.finiAdm();
 			});
