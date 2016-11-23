@@ -224,10 +224,8 @@ Each element of `servers` is an object with properties:
   storage servers to determine the appropriate number of compute zones.
 
 `az` (string)
-  (optional) availability zone.  This version of the tool only works for a
-  single-availability-zone deployment, so all servers must have the same value
-  here.  If the value is omitted from any server, that server is placed into a
-  default availablity zone.
+  (optional) availability zone.  If the value is omitted from any server, that
+  server is placed into a default availablity zone.
 
 `rack` (string)
   (optional) arbitrary identifier for the rack this server is part of.  Racks

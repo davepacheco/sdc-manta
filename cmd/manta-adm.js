@@ -221,7 +221,9 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 			assertplus.string(fromfile);
 			func = adm.genconfigFromFile;
 			options['filename'] = fromfile;
+			options['outDirectory'] = '.';
 			options['errstream'] = process.stderr;
+			delete (options['outstream']);
 		}
 
 		adm.fetchDeployed(function (err) {

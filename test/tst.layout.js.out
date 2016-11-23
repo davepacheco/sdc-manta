@@ -19,30 +19,35 @@ input: {
     "nshards": 3,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r01_metadata00",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r02_metadata00",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r01_storage00",
             "memory": 64,
@@ -211,19 +216,21 @@ generated config:
         }
     }
 }
-warning: requested 3 shards with only 3 metadata servers.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
+warning: requested 3 shards with only 3 metadata servers in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
 --------------------------------------------------
 --------------------------------------------------
 test case: invalid config: missing value (nshards)
 input: {
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -239,12 +246,14 @@ input: {
     "nshards": 3.2,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -260,12 +269,14 @@ input: {
     "nshards": -3,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -389,6 +400,7 @@ input: {
     "nshards": 3,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
@@ -406,6 +418,7 @@ input: {
     "nshards": 3,
     "servers": [
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -423,18 +436,21 @@ input: {
     "nshards": 3,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
@@ -442,7 +458,7 @@ input: {
         }
     ]
 }
-ERROR: server server_r00_metadata00, rack rack_r00, az default_az: duplicate server
+ERROR: server server_r00_metadata00, rack rack_r00, az test_az: duplicate server
 --------------------------------------------------
 --------------------------------------------------
 test case: invalid config: same rack in different AZs
@@ -490,7 +506,7 @@ input: {
 }
 
 generated config:
-error: multi-datacenter deployments are not yet supported by this tool
+error: only one- and three-datacenter deployments are supported
 --------------------------------------------------
 --------------------------------------------------
 test case: trivial two-system case, 1 shard
@@ -498,12 +514,14 @@ input: {
     "nshards": 1,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -568,7 +586,7 @@ generated config:
         }
     }
 }
-warning: requested 1 shards with only 1 metadata server.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
+warning: requested 1 shards with only 1 metadata server in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
 warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 --------------------------------------------------
 --------------------------------------------------
@@ -577,12 +595,14 @@ input: {
     "nshards": 3,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
@@ -659,7 +679,7 @@ generated config:
         }
     }
 }
-warning: requested 3 shards with only 1 metadata server.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
+warning: requested 3 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
 warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 --------------------------------------------------
 --------------------------------------------------
@@ -668,108 +688,126 @@ input: {
     "nshards": 4,
     "servers": [
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata01",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata02",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r00_metadata03",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage00",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r00_storage01",
             "memory": 64,
             "rack": "rack_r00"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r01_metadata00",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r01_metadata01",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r01_metadata02",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r01_metadata03",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r01_storage00",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r01_storage01",
             "memory": 64,
             "rack": "rack_r01"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r02_metadata00",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r02_metadata01",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r02_metadata02",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "metadata",
             "uuid": "server_r02_metadata03",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r02_storage00",
             "memory": 64,
             "rack": "rack_r02"
         },
         {
+            "az": "test_az",
             "type": "storage",
             "uuid": "server_r02_storage01",
             "memory": 64,

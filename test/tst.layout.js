@@ -308,6 +308,7 @@ function mkserver(role, racknum, servernum)
 	cnid = sprintf('server_r%02d_%s%02d', racknum, role, servernum);
 
 	return ({
+	    'az': 'test_az',
 	    'type': role,
 	    'uuid': cnid,
 	    'memory': 64,
@@ -448,7 +449,7 @@ function runTestCaseLoadDirectly(tcstate, callback)
  */
 function runTestCaseGenerate(tcstate, callback)
 {
-	var svclayout;
+	var svclayout, rv;
 
 	/* See notes about error handling above. */
 	if (tcstate.tc_dcconfig !== null) {
@@ -460,7 +461,10 @@ function runTestCaseGenerate(tcstate, callback)
 		});
 
 		console.log('\ngenerated config:');
-		svclayout.serialize(process.stdout, process.stdout);
+		rv = svclayout.serialize('test_az', process.stdout);
+		if (rv !== null) {
+			process.stdout.write(rv);
+		}
 	}
 
 	console.log(separator);
