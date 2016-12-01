@@ -209,21 +209,24 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 	this.initAdm(opts, function () {
 		var adm = self.madm_adm;
 		var func;
-		var options = {
-		    'outstream': process.stdout
-		};
+		var options = {};
 
 		if (args[0] == 'lab') {
 			func = adm.dumpConfigLab;
+			options['outstream'] = process.stdout;
 		} else if (args[0] == 'coal') {
 			func = adm.dumpConfigCoal;
+			options['outstream'] = process.stdout;
 		} else {
 			assertplus.string(fromfile);
 			func = adm.genconfigFromFile;
 			options['filename'] = fromfile;
-			options['outDirectory'] = '.';
+			if (opts.directory) {
+				options['outDirectory'] = opts.directory;
+			} else {
+				options['outstream'] = process.stdout;
+			}
 			options['errstream'] = process.stderr;
-			delete (options['outstream']);
 		}
 
 		adm.fetchDeployed(function (err) {
@@ -239,6 +242,7 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 					    'because of at least one issue');
 					process.exit(1);
 				}
+
 				self.finiAdm();
 			});
 		});
@@ -253,13 +257,18 @@ MantaAdm.prototype.do_genconfig.help =
     '\n' +
     '    manta-adm genconfig lab\n' +
     ' or manta-adm genconfig coal\n' +
-    ' or manta-adm genconfig --from-file=FILE\n';
+    ' or manta-adm genconfig [--directory DIR] --from-file=FILE\n';
 
 MantaAdm.prototype.do_genconfig.options = [ {
     'names': [ 'from-file' ],
     'type': 'string',
     'helpArg': 'FILE',
     'help': 'Use server descriptions in FILE'
+}, {
+    'names': [ 'directory', 'd' ],
+    'type': 'string',
+    'helpArg': 'DIR',
+    'help': 'Output directory for generated configs'
 } ];
 
 /*
