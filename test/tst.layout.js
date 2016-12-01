@@ -556,12 +556,13 @@ function runTestCaseGenerate(tcstate, callback)
 		console.log('\ngenerated config:');
 		azs = svclayout.azs();
 		azs.forEach(function (azname, i) {
-			rv = svclayout.serialize(azname, process.stdout,
-			    i === 0);
+			rv = svclayout.serialize(azname);
 			if (rv !== null) {
 				process.stdout.write(rv);
 			}
 		});
+
+		svclayout.printIssues(process.stdout);
 	}
 
 	console.log(separator);

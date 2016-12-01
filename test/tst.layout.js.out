@@ -52,7 +52,6 @@ input: {
 }
 
 generated config:
-warning: requested 3 shards with only 3 metadata servers in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
 {
     "server_r00_metadata00": {
         "authcache": {
@@ -212,6 +211,7 @@ warning: requested 3 shards with only 3 metadata servers in at least one datacen
         }
     }
 }
+warning: requested 3 shards with only 3 metadata servers in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
 --------------------------------------------------
 --------------------------------------------------
 test case: invalid config: missing value (nshards)
@@ -513,8 +513,6 @@ input: {
 }
 
 generated config:
-warning: requested 1 shards with only 1 metadata server in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
-warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 {
     "server_r00_metadata00": {
         "authcache": {
@@ -570,6 +568,8 @@ warning: configuration has only 1 rack.  This configuration may not survive rack
         }
     }
 }
+warning: requested 1 shards with only 1 metadata server in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
+warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 --------------------------------------------------
 --------------------------------------------------
 test case: trivial two-system case, 3 shards
@@ -592,8 +592,6 @@ input: {
 }
 
 generated config:
-warning: requested 3 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
-warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 {
     "server_r00_metadata00": {
         "authcache": {
@@ -661,6 +659,8 @@ warning: configuration has only 1 rack.  This configuration may not survive rack
         }
     }
 }
+warning: requested 3 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
+warning: configuration has only 1 rack.  This configuration may not survive rack failure.
 --------------------------------------------------
 --------------------------------------------------
 test case: one rack with fewer servers
@@ -1654,7 +1654,6 @@ input: {
 }
 
 generated config:
-warning: requested 2 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
 {
     "az0_server_r00_metadata00": {
         "authcache": {
@@ -1808,6 +1807,7 @@ warning: requested 2 shards with only 1 metadata server in at least one datacent
         }
     }
 }
+warning: requested 2 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
 --------------------------------------------------
 --------------------------------------------------
 test case: 3-AZ, 2-racks-per-AZ, 3-shard deployment
