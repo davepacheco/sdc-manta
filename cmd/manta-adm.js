@@ -204,6 +204,10 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 		callback(new Error(
 		    'expected "lab", "coal", or --from-file option'));
 		return;
+	} else if (opts.directory) {
+		callback(new Error(
+		    '--directory can only be used with --from-file'));
+		return;
 	}
 
 	this.initAdm(opts, function () {
