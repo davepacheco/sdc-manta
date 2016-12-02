@@ -9,7 +9,7 @@
  */
 
 /*
- * tst.adm.js: tests the stripe() utility function
+ * tst.stripe.js: tests the stripe() utility function
  */
 
 var assert = require('assert');

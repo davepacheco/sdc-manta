@@ -208,28 +208,29 @@ When the first argument is \fB\fC"lab"\fR, the command produces a configuration
 suitable for a larger single\-server install.  The configuration is always
 emitted to stdout.
 .PP
-The \fB\fC\-\-from\-file=FILE\fR option can be used to generate a configuration suitable
-for a much larger deployment.  This form is somewhat experimental, but attempts
-to create a deployment that will survive failures of any component, server,
-rack, or availability zone (if servers are specified in more than one
-availability zone).  \fB\fCFILE\fR is a JSON file describing the parameters of the
-deployment, including the number of metadata shards and the set of availability
-zones, racks, and servers.  You can omit availability zone and rack information,
-and the tool will generate a configuration ignoring rack\-level and AZ\-level
-considerations.
+The \fB\fC\-\-from\-file=FILE\fR form can be used to generate a configuration suitable for
+a much larger, production\-style deployment.  \fB\fCFILE\fR is a JSON file in the format
+specified below that describes the parameters of the deployment, including the
+number of metadata shards and the set of availability zones, racks, and servers.
+This form attempts to create a deployment that will survive failures of any
+component, server, rack, or availability zone as long as sufficient servers,
+racks, and availability zones are included in the input file.  Availability zone
+and rack information can be omitted from the file, in which case the tool will
+generate a configuration ignoring rack\-level and AZ\-level considerations.  This
+tool uses a number of heuristics, and the output should be verified.
 .PP
-If \fB\fC\-\-directory\fR is not specified and \fB\fCFILE\fR specifies servers in only one
-availability zone, then the configuration will be written to stdout.  If
-\fB\fC\-\-directory\fR is specified, then output files will be written to files in \fB\fCDIR\fR
-named by availability zone.  \fB\fC\-\-directory\fR must be used if \fB\fCFILE\fR specifies
-servers with more than one availability zone.
+By default, the generated configuration is emitted to stdout.  With the
+\fB\fC\-\-directory\fR option, the configuration will be written to files in the
+specified directory named by availability zone.  This option must be used if the
+servers in \fB\fCFILE\fR span more than one availability zone.
 .PP
 The input JSON file \fB\fCFILE\fR should contain a single object with properties:
 .TP
 \fB\fCnshards\fR (positive integer)
 the number of database shards to create, which is usually one more than the
-number intended to store object metadata (in order to accommodate jobs and
-low\-volume system metadata in shard 1)
+number of shards that are intended to store object metadata (in order to
+accommodate jobs and low\-volume system metadata that's typically stored in
+shard 1)
 .TP
 \fB\fCservers\fR (array of objects)
 the list of servers available for deployment

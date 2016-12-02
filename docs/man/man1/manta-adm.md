@@ -195,28 +195,29 @@ When the first argument is `"lab"`, the command produces a configuration
 suitable for a larger single-server install.  The configuration is always
 emitted to stdout.
 
-The `--from-file=FILE` option can be used to generate a configuration suitable
-for a much larger deployment.  This form is somewhat experimental, but attempts
-to create a deployment that will survive failures of any component, server,
-rack, or availability zone (if servers are specified in more than one
-availability zone).  `FILE` is a JSON file describing the parameters of the
-deployment, including the number of metadata shards and the set of availability
-zones, racks, and servers.  You can omit availability zone and rack information,
-and the tool will generate a configuration ignoring rack-level and AZ-level
-considerations.
+The `--from-file=FILE` form can be used to generate a configuration suitable for
+a much larger, production-style deployment.  `FILE` is a JSON file in the format
+specified below that describes the parameters of the deployment, including the
+number of metadata shards and the set of availability zones, racks, and servers.
+This form attempts to create a deployment that will survive failures of any
+component, server, rack, or availability zone as long as sufficient servers,
+racks, and availability zones are included in the input file.  Availability zone
+and rack information can be omitted from the file, in which case the tool will
+generate a configuration ignoring rack-level and AZ-level considerations.  This
+tool uses a number of heuristics, and the output should be verified.
 
-If `--directory` is not specified and `FILE` specifies servers in only one
-availability zone, then the configuration will be written to stdout.  If
-`--directory` is specified, then output files will be written to files in `DIR`
-named by availability zone.  `--directory` must be used if `FILE` specifies
-servers with more than one availability zone.
+By default, the generated configuration is emitted to stdout.  With the
+`--directory` option, the configuration will be written to files in the
+specified directory named by availability zone.  This option must be used if the
+servers in `FILE` span more than one availability zone.
 
 The input JSON file `FILE` should contain a single object with properties:
 
 `nshards` (positive integer)
   the number of database shards to create, which is usually one more than the
-  number intended to store object metadata (in order to accommodate jobs and
-  low-volume system metadata in shard 1)
+  number of shards that are intended to store object metadata (in order to
+  accommodate jobs and low-volume system metadata that's typically stored in
+  shard 1)
 
 `servers` (array of objects)
   the list of servers available for deployment
