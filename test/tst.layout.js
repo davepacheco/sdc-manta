@@ -563,6 +563,10 @@ function runTestCaseGenerate(tcstate, callback)
 		});
 
 		svclayout.printIssues(process.stdout);
+		if (svclayout.nerrors() === 0) {
+			console.log('\nsummary:');
+			svclayout.printSummary(process.stdout);
+		}
 	}
 
 	console.log(separator);

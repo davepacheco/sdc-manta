@@ -212,6 +212,28 @@ generated config:
     }
 }
 warning: requested 3 shards with only 3 metadata servers in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
+
+summary:
+     SERVICE          SHARD       default_az
+     nameservice          -                3
+     electric-moray       -                3
+     storage              -                2
+     authcache            -                2
+     webapi               -                3
+     loadbalancer         -                3
+     jobsupervisor        -                2
+     jobpuller            -                2
+     medusa               -                2
+     ops                  -                1
+     madtom               -                1
+     marlin-dashboard     -                1
+     marlin               -               32
+     postgres             1                3
+     postgres             2                3
+     postgres             3                3
+     moray                1                3
+     moray                2                3
+     moray                3                3
 --------------------------------------------------
 --------------------------------------------------
 test case: invalid config: missing value (nshards)
@@ -570,6 +592,24 @@ generated config:
 }
 warning: requested 1 shards with only 1 metadata server in at least one datacenter.  Under some conditions, multiple databases may wind up running on the same servers.  This is not recommended.
 warning: configuration has only 1 rack.  This configuration may not survive rack failure.
+
+summary:
+     SERVICE          SHARD       default_az
+     nameservice          -                3
+     electric-moray       -                2
+     storage              -                1
+     authcache            -                2
+     webapi               -                2
+     loadbalancer         -                2
+     jobsupervisor        -                2
+     jobpuller            -                2
+     medusa               -                2
+     ops                  -                1
+     madtom               -                1
+     marlin-dashboard     -                1
+     marlin               -               16
+     postgres             1                3
+     moray                1                3
 --------------------------------------------------
 --------------------------------------------------
 test case: trivial two-system case, 3 shards
@@ -661,6 +701,28 @@ generated config:
 }
 warning: requested 3 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
 warning: configuration has only 1 rack.  This configuration may not survive rack failure.
+
+summary:
+     SERVICE          SHARD       default_az
+     nameservice          -                3
+     electric-moray       -                2
+     storage              -                1
+     authcache            -                2
+     webapi               -                2
+     loadbalancer         -                2
+     jobsupervisor        -                2
+     jobpuller            -                2
+     medusa               -                2
+     ops                  -                1
+     madtom               -                1
+     marlin-dashboard     -                1
+     marlin               -               16
+     postgres             1                3
+     postgres             2                3
+     postgres             3                3
+     moray                1                3
+     moray                2                3
+     moray                3                3
 --------------------------------------------------
 --------------------------------------------------
 test case: one rack with fewer servers
@@ -953,6 +1015,26 @@ generated config:
         }
     }
 }
+
+summary:
+     SERVICE          SHARD       default_az
+     nameservice          -                3
+     electric-moray       -                8
+     storage              -                3
+     authcache            -                2
+     webapi               -                8
+     loadbalancer         -                8
+     jobsupervisor        -                2
+     jobpuller            -                2
+     medusa               -                2
+     ops                  -                1
+     madtom               -                1
+     marlin-dashboard     -                1
+     marlin               -               48
+     postgres             1                3
+     postgres             2                3
+     moray                1                3
+     moray                2                3
 --------------------------------------------------
 --------------------------------------------------
 test case: 3-rack, 4-shard deployment
@@ -1415,6 +1497,30 @@ generated config:
         }
     }
 }
+
+summary:
+     SERVICE          SHARD       default_az
+     nameservice          -                3
+     electric-moray       -               12
+     storage              -                6
+     authcache            -                2
+     webapi               -               12
+     loadbalancer         -               12
+     jobsupervisor        -                2
+     jobpuller            -                2
+     medusa               -                2
+     ops                  -                1
+     madtom               -                1
+     marlin-dashboard     -                1
+     marlin               -               96
+     postgres             1                3
+     postgres             2                3
+     postgres             3                3
+     postgres             4                3
+     moray                1                3
+     moray                2                3
+     moray                3                3
+     moray                4                3
 --------------------------------------------------
 --------------------------------------------------
 test case: 3-AZ, 1-rack-per-AZ, 1-shard deployment
@@ -1602,6 +1708,24 @@ generated config:
         }
     }
 }
+
+summary:
+     SERVICE          SHARD              az0              az1              az2
+     nameservice          -                1                1                1
+     electric-moray       -                1                1                1
+     storage              -                1                1                1
+     authcache            -                1                1                 
+     webapi               -                1                1                1
+     loadbalancer         -                1                1                1
+     jobsupervisor        -                1                1                 
+     jobpuller            -                1                                 1
+     medusa               -                                 1                1
+     ops                  -                1                                  
+     madtom               -                                 1                 
+     marlin-dashboard     -                                                  1
+     marlin               -               16               16               16
+     postgres             1                1                1                1
+     moray                1                1                1                1
 --------------------------------------------------
 --------------------------------------------------
 test case: 3-AZ, 1-rack-per-AZ, 2-shard deployment
@@ -1808,6 +1932,26 @@ generated config:
     }
 }
 warning: requested 2 shards with only 1 metadata server in at least one datacenter.  Multiple primary databases will wind up running on the same servers, and this configuration may not survive server failure.  This is not recommended.
+
+summary:
+     SERVICE          SHARD              az0              az1              az2
+     nameservice          -                1                1                1
+     electric-moray       -                1                1                1
+     storage              -                1                1                1
+     authcache            -                1                1                 
+     webapi               -                1                1                1
+     loadbalancer         -                1                1                1
+     jobsupervisor        -                1                1                 
+     jobpuller            -                1                                 1
+     medusa               -                                 1                1
+     ops                  -                1                                  
+     madtom               -                                 1                 
+     marlin-dashboard     -                                                  1
+     marlin               -               16               16               16
+     postgres             1                1                1                1
+     postgres             2                1                1                1
+     moray                1                1                1                1
+     moray                2                1                1                1
 --------------------------------------------------
 --------------------------------------------------
 test case: 3-AZ, 2-racks-per-AZ, 3-shard deployment
@@ -2253,4 +2397,26 @@ generated config:
         }
     }
 }
+
+summary:
+     SERVICE          SHARD              az0              az1              az2
+     nameservice          -                1                1                1
+     electric-moray       -                3                3                3
+     storage              -                3                3                3
+     authcache            -                1                1                 
+     webapi               -                3                3                3
+     loadbalancer         -                3                3                3
+     jobsupervisor        -                1                1                 
+     jobpuller            -                1                                 1
+     medusa               -                                 1                1
+     ops                  -                1                                  
+     madtom               -                                 1                 
+     marlin-dashboard     -                                                  1
+     marlin               -               48               48               48
+     postgres             1                1                1                1
+     postgres             2                1                1                1
+     postgres             3                1                1                1
+     moray                1                1                1                1
+     moray                2                1                1                1
+     moray                3                1                1                1
 --------------------------------------------------
