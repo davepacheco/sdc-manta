@@ -7,11 +7,13 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
  * manta-adm.js: manage manta deployments.  Provides subcommands:
+ *
+ *     amon		view and configure information about alarms
  *
  *     cn		show information about CNs
  *
@@ -78,7 +80,7 @@ MantaAdm.prototype.initAdm = function (opts, callback)
 		console.error('logs at ' + opts.log_file);
 	} else {
 		logstreams = [ {
-		    'level': 'fatal',
+		    'level': process.env['LOG_LEVEL'] || 'fatal',
 		    'stream': process.stderr
 		} ];
 	}
@@ -101,6 +103,8 @@ MantaAdm.prototype.finiAdm = function ()
 {
 	this.madm_adm.close();
 };
+
+MantaAdm.prototype.do_alarm = MantaAdmAlarm;
 
 MantaAdm.prototype.do_cn = function (subcmd, opts, args, callback)
 {
@@ -727,6 +731,84 @@ MantaAdmZk.prototype.do_fixup.options = [ {
     'type': 'string',
     'help': 'Dump logs to this file (or "stdout")'
 } ];
+
+function MantaAdmAlarm(parent)
+{
+	this.maa_parent = parent;
+	cmdln.Cmdln.call(this, {
+	    'name': 'alarm',
+	    'desc': 'View and configure information about alarms.'
+	});
+}
+
+util.inherits(MantaAdmAlarm, cmdln.Cmdln);
+
+MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
+{
+	var self = this;
+	var options = {};
+	var selected;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	if (opts.columns) {
+		selected = checkColumns(madm.alarmColumnNames(), opts.columns);
+		if (selected instanceof Error) {
+			callback(selected);
+			return;
+		}
+
+		options.columns = selected;
+	}
+
+	if (opts.omit_header)
+		options.omitHeader = true;
+
+	vasync.pipeline({
+	    'funcs': [
+		function initAdm(_, stepcb) {
+			self.maa_parent.initAdm(opts, stepcb);
+		},
+		function fetch(_, stepcb) {
+			self.maa_parent.madm_adm.fetchDeployed(stepcb);
+		},
+		function fetchAmon(_, stepcb) {
+			self.maa_parent.madm_adm.fetchAlarms(stepcb);
+		}
+	    ]
+	}, function (err) {
+		if (err) {
+			fatal(err.message);
+		}
+
+		self.maa_parent.madm_adm.dumpAlarms(process.stdout, options);
+		self.maa_parent.finiAdm();
+	});
+};
+
+MantaAdmAlarm.prototype.do_list.help = [
+    'List open alarms',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm list OPTIONS',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_list.options = [ {
+    'names': [ 'omit-header', 'H'],
+    'type': 'bool',
+    'help': 'Omit the header row for columnar output'
+}, {
+    'names': [ 'columns', 'o' ],
+    'type': 'arrayOfString',
+    'help': 'Select columns for output (see below)'
+} ];
+
 
 function checkColumns(allowed, columns)
 {

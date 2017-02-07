@@ -1,10 +1,14 @@
-# MANTA-ADM 1 "2016" Manta "Manta Operator Commands"
+# MANTA-ADM 1 "2017" Manta "Manta Operator Commands"
 
 ## NAME
 
 manta-adm - administer a Manta deployment
 
 ## SYNOPSIS
+
+`manta-adm alarm close ALARM_ID...`
+
+`manta-adm alarm list [-H] [-o FIELD...] [-s | --state STATE]`
 
 `manta-adm cn [-l LOG_FILE] [-H] [-o FIELD...] [-n] [-s] CN_FILTER`
 
@@ -29,6 +33,9 @@ The `manta-adm` command is used to administer various aspects of a Manta
 deployment.  This command only operates on zones within the same datacenter.
 The command may need to be repeated in other datacenters in order to execute it
 across an entire Manta deployment.
+
+`manta-adm alarm`
+  List and configure amon-based alarms for Manta.
 
 `manta-adm cn`
   Show information about Manta servers in this DC.
@@ -139,6 +146,28 @@ status of the program to determine success of failure.
 
 
 ## SUBCOMMANDS
+
+### "amon" subcommand
+
+`manta-adm alarm close ALARM_ID...`
+
+Close the specified alarms.
+
+`manta-adm alarm list [-H] [-o FIELD...] [-s | --state STATE] [--service SERVICE] [--zonename ZONENAME]`
+
+List open alarms.
+
+`manta-adm alarm notifications enable ALARM_ID...`
+
+Enable notifications for the specified alarms.
+
+`manta-adm alarm notifications disable ALARM_ID...`
+
+Disable notifications for the specified alarms.
+
+`manta-adm alarm probes list [-H] [-o FIELD...] [--service SERVICE] [--zonename ZONENAME]`
+
+List probes that are configured to fire alarms.
 
 
 ### "cn" subcommand
@@ -504,7 +533,7 @@ It also supports the `-l/--log_file` option described above.
 
 ## COPYRIGHT
 
-Copyright (c) 2016 Joyent Inc.
+Copyright (c) 2017 Joyent Inc.
 
 ## SEE ALSO
 
