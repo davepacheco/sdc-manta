@@ -809,6 +809,92 @@ MantaAdmAlarm.prototype.do_list.options = [ {
     'help': 'Select columns for output (see below)'
 } ];
 
+MantaAdmAlarm.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
+
+
+function MantaAdmAlarmProbeGroup(parent)
+{
+	this.maap_parent = parent;
+	this.maap_root = parent.maa_parent;
+
+	cmdln.Cmdln.call(this, {
+	    'name': 'probegroup',
+	    'desc': 'View and configure information about amon probe groups.'
+	});
+}
+
+util.inherits(MantaAdmAlarmProbeGroup, cmdln.Cmdln);
+
+MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
+    opts, args, callback)
+{
+	var self = this;
+	var options = {};
+	var selected;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	if (opts.columns) {
+		selected = checkColumns(
+		    madm.probeGroupColumnNames(), opts.columns);
+		if (selected instanceof Error) {
+			callback(selected);
+			return;
+		}
+
+		options.columns = selected;
+	}
+
+	if (opts.omit_header)
+		options.omitHeader = true;
+
+	vasync.pipeline({
+	    'funcs': [
+		function initAdm(_, stepcb) {
+			self.maap_root.initAdm(opts, stepcb);
+		},
+		function fetch(_, stepcb) {
+			self.maap_root.madm_adm.fetchDeployed(stepcb);
+		},
+		function fetchAmon(_, stepcb) {
+			self.maap_root.madm_adm.fetchAlarms(stepcb);
+		}
+	    ]
+	}, function (err) {
+		if (err) {
+			fatal(err.message);
+		}
+
+		self.maap_root.madm_adm.dumpProbeGroups(
+		    process.stdout, options);
+		self.maap_root.finiAdm();
+	});
+};
+
+MantaAdmAlarmProbeGroup.prototype.do_list.help = [
+    'List open alarms',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm probegroup list OPTIONS',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarmProbeGroup.prototype.do_list.options = [ {
+    'names': [ 'omit-header', 'H'],
+    'type': 'bool',
+    'help': 'Omit the header row for columnar output'
+}, {
+    'names': [ 'columns', 'o' ],
+    'type': 'arrayOfString',
+    'help': 'Select columns for output (see below)'
+} ];
+
+
 
 function checkColumns(allowed, columns)
 {
