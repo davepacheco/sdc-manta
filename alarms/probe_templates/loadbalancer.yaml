@@ -1,0 +1,122 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "loadbalancer" service
+#
+
+-
+    event: upset.manta.loadbalancer.haproxy-memory-size--1G-
+    legacyName: "haproxy memory size (1G)"
+    scope: 
+        service: loadbalancer
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "ps -o rss= -p \"$(pgrep -c \"$(svcs -H -o ctid haproxy)\")\" | awk '$1 > 1048576{ printf(\"haproxy rss too large\\n\"); }'"
+                stdoutMatch: 
+                    pattern: haproxy rss too large
+                interval: 120
+                threshold: 2
+                period: 360
+    ka: 
+        title: "haproxy memory size (1G)"
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.loadbalancer.stud-memory-size--1G-
+    legacyName: "stud memory size (1G)"
+    scope: 
+        service: loadbalancer
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "test ! $(ps -orss -p \"`pgrep stud`\" | grep -v RSS | nawk '{t+=$1}END{print t}') -gt 1048576"
+                interval: 120
+                threshold: 2
+                period: 360
+    ka: 
+        title: "stud memory size (1G)"
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.loadbalancer.muppet-memory-size--512M-
+    legacyName: "muppet memory size (512M)"
+    scope: 
+        service: loadbalancer
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "test ! $(ps -orss -p $(svcs -Hoctid -p muppet | tail -n 1 | awk '{print $2}') | tail -n 1) -gt 524288"
+                interval: 120
+                threshold: 2
+                period: 360
+    ka: 
+        title: "muppet memory size (512M)"
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.loadbalancer.muppet-logscan
+    legacyName: muppet-logscan
+    scope: 
+        service: loadbalancer
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: muppet
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: muppet-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.loadbalancer.no-backend-servers
+    legacyName: no backend servers
+    scope: 
+        service: loadbalancer
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "test -n $(/opt/smartdc/muppet/build/node/bin/node /opt/smartdc/muppet/node_modules/.bin/haproxystat showStat /tmp/haproxy  | /opt/smartdc/muppet/build/node/bin/node -e 's=\"\"; process.stdin.resume(); process.stdin.on(\"data\",function(c){s+=c}); process.stdin.on(\"end\",function(){o=eval(\"(\"+s+\")\");console.log(JSON.stringify(o)); });' | /usr/bin/json  -c 'this.type == \"backend\" && !/stats/.test(this.pxname) && act == 0' -a pxname)"
+                interval: 30
+                threshold: 2
+                period: 120
+    ka: 
+        title: no backend servers
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

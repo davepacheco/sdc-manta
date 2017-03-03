@@ -1,0 +1,36 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "electric-moray" service
+#
+
+-
+    event: upset.manta.electric-moray.electric-moray-logscan
+    legacyName: electric-moray-logscan
+    scope: 
+        service: electric-moray
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/electric-moray.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: electric-moray-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

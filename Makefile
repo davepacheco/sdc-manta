@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2016, Joyent, Inc.
+# Copyright (c) 2017, Joyent, Inc.
 #
 
 #
@@ -24,6 +24,7 @@
 # Programs
 #
 CATEST		 = deps/catest/catest
+PROBECHK	 = node ./tools/probecfgchk.js
 
 #
 # Options and overrides
@@ -50,6 +51,7 @@ JSON_FILES	 = package.json \
 		   $(shell find config \
 				manifests \
 				sapi_manifests -name '*.json*')
+PROBE_FILES	 = $(wildcard alarms/probe_templates/*.yaml)
 
 include ./tools/mk/Makefile.defs
 include ./tools/mk/Makefile.node_deps.defs
@@ -88,7 +90,10 @@ all: $(SMF_MANIFESTS) deps sdc-scripts
 .PHONY: manpages
 manpages: $(MAN_OUTPUTS)
 
-check:: $(NODE_EXEC)
+check:: $(NODE_EXEC) check-probe-files
+
+check-probe-files:
+	$(PROBECHK) $(PROBE_FILES)
 
 .PHONY: test
 test: | $(CATEST)

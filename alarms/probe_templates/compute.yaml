@@ -1,0 +1,131 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "compute" service
+#
+
+-
+    event: upset.manta.compute.marlin-agent-logscan-error
+    legacyName: marlin-agent-logscan-error
+    scope: 
+        service: compute
+        global: true
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: marlin-agent
+                fields: 
+                    level: error
+                threshold: 1
+                period: 60
+    ka: 
+        title: marlin-agent-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.compute.marlin-agent-logscan-fatal
+    legacyName: marlin-agent-logscan-fatal
+    scope: 
+        service: compute
+        global: true
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: marlin-agent
+                fields: 
+                    level: fatal
+                threshold: 1
+                period: 60
+    ka: 
+        title: marlin-agent-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.compute.marlin-agent-logscan-core
+    legacyName: marlin-agent-logscan-core
+    scope: 
+        service: compute
+        global: true
+    checks: 
+        - 
+            type: log-scan
+            config: 
+                smfServiceName: marlin-agent
+                match: 
+                    pattern: Stopping because process dumped core.
+                threshold: 1
+                period: 60
+    ka: 
+        title: marlin-agent-logscan-core
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.compute.logs-not-uploaded
+    legacyName: logs not uploaded
+    scope: 
+        service: compute
+        global: true
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "test ! $(find /var/log/manta/upload -type f | wc -l) -gt 0"
+                interval: 300
+                threshold: 5
+                period: 1800
+                timeout: 30
+    ka: 
+        title: logs not uploaded
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.compute.svcs--SMF-maintenance
+    legacyName: "svcs: SMF maintenance"
+    scope: 
+        service: compute
+        global: true
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "/usr/bin/svcs -x"
+                stdoutMatch: 
+                    pattern: maintenance
+                    matchWord: true
+                threshold: 1
+                period: 60
+                timeout: 30
+    ka: 
+        title: "svcs: SMF maintenance"
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

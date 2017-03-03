@@ -1,0 +1,80 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "jobsupervisor" service
+#
+
+-
+    event: upset.manta.jobsupervisor.jobsupervisor-logscan-error
+    legacyName: jobsupervisor-logscan-error
+    scope: 
+        service: jobsupervisor
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: jobsupervisor
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: jobsupervisor-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.jobsupervisor.jobsupervisor-logscan-fatal
+    legacyName: jobsupervisor-logscan-fatal
+    scope: 
+        service: jobsupervisor
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: jobsupervisor
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: jobsupervisor-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.jobsupervisor.jobsupervisor-logscan-core
+    legacyName: jobsupervisor-logscan-core
+    scope: 
+        service: jobsupervisor
+    checks: 
+        - 
+            type: log-scan
+            config: 
+                smfServiceName: jobsupervisor
+                match: 
+                    pattern: Stopping because process dumped core.
+                threshold: 1
+                period: 60
+    ka: 
+        title: jobsupervisor-logscan-core
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

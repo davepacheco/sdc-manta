@@ -1,0 +1,498 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "ops" service
+#
+
+-
+    event: upset.manta.ops.mackerel-logscan
+    legacyName: mackerel-logscan
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mackerel.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mackerel-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-pg-transform-logscan-error
+    legacyName: mola-pg-transform-logscan-error
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-pg-transform.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-pg-transform-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-pg-transform-logscan-fatal
+    legacyName: mola-pg-transform-logscan-fatal
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-pg-transform.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-pg-transform-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-logscan-error
+    legacyName: mola-logscan-error
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-logscan-fatal
+    legacyName: mola-logscan-fatal
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-gc-create-links-logscan-error
+    legacyName: mola-gc-create-links-logscan-error
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-gc-create-links.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-gc-create-links-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-gc-create-links-logscan-fatal
+    legacyName: mola-gc-create-links-logscan-fatal
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-gc-create-links.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-gc-create-links-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-moray-gc-logscan-error
+    legacyName: mola-moray-gc-logscan-error
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-moray-gc.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-moray-gc-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-moray-gc-logscan-fatal
+    legacyName: mola-moray-gc-logscan-fatal
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-moray-gc.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-moray-gc-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-audit-logscan-error
+    legacyName: mola-audit-logscan-error
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-audit.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-audit-logscan-error
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-audit-logscan-fatal
+    legacyName: mola-audit-logscan-fatal
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/mola-audit.log"
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: mola-audit-logscan-fatal
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-create-link-files-piling-up
+    legacyName: mola-create-link-files-piling-up
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && test $(mfind /poseidon/stor/manta_gc/all/do | wc -l) -lt 150"
+                interval: 300
+                period: 1800
+                threshold: 6
+                timeout: 20
+    ka: 
+        title: mola-create-link-files-piling-up
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-moray-files-piling-up
+    legacyName: mola-moray-files-piling-up
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && for s in $(mls /poseidon/stor/manta_gc/moray); do echo \"$s \"; test $(mls /poseidon/stor/manta_gc/moray/$s | wc -l) -lt 150; if [[ $? -eq 0 ]]; then echo \"success\"; else echo \"fail\"; fi; done"
+                interval: 300
+                period: 1800
+                threshold: 6
+                timeout: 20
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mola-moray-files-piling-up
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-mako-files-piling-up
+    legacyName: mola-mako-files-piling-up
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && for s in $(mls /poseidon/stor/manta_gc/mako); do echo \"$s \"; test $(mls /poseidon/stor/manta_gc/mako/$s | wc -l) -lt 150; if [[ $? -eq 0 ]]; then echo \"success\"; else echo \"fail\"; fi; done"
+                interval: 300
+                period: 1800
+                threshold: 6
+                timeout: 20
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mola-mako-files-piling-up
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mola-job-running-too-long
+    legacyName: mola-job-running-too-long
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && test $(expr $(date +%s) - $(mjob get $(mjob list -n manta_gc -s running | head -1 | tr -d '/') | json timeCreated | xargs -i date --utc --date \"{}\" +%s)) -lt 10800; if [[ $? -eq 1 ]]; then echo \"fail\"; else echo \"success\"; fi"
+                interval: 300
+                threshold: 1
+                timeout: 20
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mola-job-running-too-long
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.manatee-backups-failed
+    legacyName: manatee-backups-failed
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/00' --date='7 hours ago'); echo $DATE; for s in $(mls /poseidon/stor/manatee_backups | tr -d '/'); do /opt/local/bin/echo -n \"$s \"; until [[ \"$MLS\" != '' ]]; do export MLS=$(mls /poseidon/stor/manatee_backups/$s/$DATE 2>&1); done; echo \"$MLS\" | grep '\\(manta_delete_log-\\)\\|\\(marlin_tasks_v2-\\)' >/dev/null; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi; export MLS=''; done"
+                interval: 300
+                threshold: 1
+                period: 3600
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: manatee-backups-failed
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mackerel-summary-missing
+    legacyName: mackerel-summary-missing
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d' --date='30 hours ago'); echo $DATE; mls /poseidon/stor/usage/summary/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
+                interval: 300
+                threshold: 1
+                period: 3600
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mackerel-summary-missing
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mackerel-storage-missing
+    legacyName: mackerel-storage-missing
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/00' --date='12 hours ago'); echo $DATE; mls /poseidon/stor/usage/storage/$DATE 2>&1 | grep h00.json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
+                interval: 300
+                threshold: 1
+                period: 3600
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mackerel-storage-missing
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mackerel-request-missing
+    legacyName: mackerel-request-missing
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/%H' --date='2 hours ago'); echo $DATE; mls /poseidon/stor/usage/request/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
+                interval: 300
+                threshold: 1
+                period: 3600
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mackerel-request-missing
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.mackerel-compute-missing
+    legacyName: mackerel-compute-missing
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/%H' --date='2 hours ago'); echo $DATE; mls /poseidon/stor/usage/compute/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
+                interval: 300
+                threshold: 1
+                period: 3600
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: mackerel-compute-missing
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.ops.wrasse-behind
+    legacyName: wrasse-behind
+    scope: 
+        service: ops
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "/opt/smartdc/mola/amon/checks/check-wrasse-behind"
+                timeout: 180
+                interval: 3600
+                threshold: 1
+    ka: 
+        title: wrasse-behind
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
