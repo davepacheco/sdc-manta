@@ -1,0 +1,101 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "storage" service
+#
+
+-
+    event: upset.manta.storage.mako-gc-logscan
+    legacyName: mako-gc-logscan
+    scope: 
+        service: storage
+    checks: 
+        - 
+            type: log-scan
+            config: 
+                path: "/var/log/mako_gc.log"
+                match: 
+                    pattern: fatal error
+                threshold: 1
+                period: 60
+    ka: 
+        title: mako-gc-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.storage.minnow-logscan
+    legacyName: minnow-logscan
+    scope: 
+        service: storage
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: minnow
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: minnow-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.storage.minnow-heartbeat-too-old
+    legacyName: minnow heartbeat too old
+    scope: 
+        service: storage
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "/bin/bash -c 'if [[ -f /opt/smartdc/minnow/bin/check-minnow ]]; then /opt/smartdc/minnow/bin/check-minnow; exit $?; fi; let delta=$(date +%s)-$(PATH=/opt/smartdc/minnow/build/node/bin:/opt/smartdc/minnow/node_modules/.bin:$PATH findobjects -h $(cat /opt/smartdc/minnow/etc/config.json | json moray.host) manta_storage hostname=$(hostname)* | json -e _mtime=_mtime/1000 -e _mtime=~~_mtime _mtime) ; test $delta -lt 900'"
+                threshold: 3
+                period: 300
+                timeout: 30
+    ka: 
+        title: minnow heartbeat too old
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.storage.shrimp-nginx-ping
+    legacyName: shrimp-nginx-ping
+    scope: 
+        service: storage
+        checkFrom: webapi
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "curl -m 5 -sf http://{{MANTA_STORAGE_ID}}/50x.html -o /dev/null"
+                interval: 60
+                threshold: 3
+                period: 300
+    ka: 
+        title: shrimp-nginx-ping
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

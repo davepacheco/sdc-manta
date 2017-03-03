@@ -743,6 +743,62 @@ function MantaAdmAlarm(parent)
 
 util.inherits(MantaAdmAlarm, cmdln.Cmdln);
 
+MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
+{
+	vasync.pipeline({
+	    'arg': this,
+	    'funcs': [
+		function initAdm(self, stepcb) {
+			self.maa_parent.initAdm(opts, stepcb);
+		},
+		function fetch(self, stepcb) {
+			self.maa_parent.madm_adm.fetchDeployed(stepcb);
+		},
+		function fetchAmon(self, stepcb) {
+			self.maa_parent.madm_adm.fetchAlarms(stepcb);
+		}
+	    ]
+	}, function (err) {
+		if (err) {
+			fatal(err.message);
+		}
+
+		callback();
+	});
+};
+
+MantaAdmAlarm.prototype.do_get = function (subcmd, opts, args, callback)
+{
+	if (args.length < 1) {
+		callback(new Error('expected ALARMID'));
+		return;
+	}
+
+	if (args.length > 1) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	this.initAdmAndFetchAlarms(opts, function () {
+		/* XXX */
+		throw (new Error('not yet implemented'));
+		// self.maa_parent.finiAdm();
+	});
+};
+
+MantaAdmAlarm.prototype.do_get.help = [
+    'Fetch details about one alarm',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm get ALARMID',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_get.options = [];
+
+
 MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 {
 	var self = this;
@@ -767,23 +823,7 @@ MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 	if (opts.omit_header)
 		options.omitHeader = true;
 
-	vasync.pipeline({
-	    'funcs': [
-		function initAdm(_, stepcb) {
-			self.maa_parent.initAdm(opts, stepcb);
-		},
-		function fetch(_, stepcb) {
-			self.maa_parent.madm_adm.fetchDeployed(stepcb);
-		},
-		function fetchAmon(_, stepcb) {
-			self.maa_parent.madm_adm.fetchAlarms(stepcb);
-		}
-	    ]
-	}, function (err) {
-		if (err) {
-			fatal(err.message);
-		}
-
+	this.initAdmAndFetchAlarms(opts, function () {
 		self.maa_parent.madm_adm.dumpAlarms(process.stdout, options);
 		self.maa_parent.finiAdm();
 	});
@@ -810,6 +850,65 @@ MantaAdmAlarm.prototype.do_list.options = [ {
 } ];
 
 MantaAdmAlarm.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
+
+MantaAdmAlarm.prototype.do_verify = function (subcmd, opts, args, callback)
+{
+	var self = this;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	this.initAdmAndFetchAlarms(opts, function () {
+		var root = self.maa_parent;
+		var adm = root.madm_adm;
+
+		adm.fetchProbes({
+		    'concurrency': opts.concurrency
+		}, function (err) {
+			var result;
+
+			if (err) {
+				fatal(err.message);
+			}
+
+			/* XXX */
+			result = adm.updateAmonConfig({
+			    'dryrun': true,
+			    'stream': process.stderr
+			});
+
+			if (result.error) {
+				fatal(result.error.message);
+			}
+
+			if (result.needsChanges) {
+				fatal('probe configuration is not up to date');
+			}
+
+			root.finiAdm();
+		});
+	});
+};
+
+MantaAdmAlarm.prototype.do_verify.help = [
+    'Compare the probe and probe group definitions provided by this software ',
+    'with the list of probes and probe groups currently deployed.',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm verify OPTIONS',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_verify.options = [ {
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrency requests to make',
+    'default': 10
+} ];
 
 
 function MantaAdmAlarmProbeGroup(parent)
@@ -851,23 +950,7 @@ MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
 	if (opts.omit_header)
 		options.omitHeader = true;
 
-	vasync.pipeline({
-	    'funcs': [
-		function initAdm(_, stepcb) {
-			self.maap_root.initAdm(opts, stepcb);
-		},
-		function fetch(_, stepcb) {
-			self.maap_root.madm_adm.fetchDeployed(stepcb);
-		},
-		function fetchAmon(_, stepcb) {
-			self.maap_root.madm_adm.fetchAlarms(stepcb);
-		}
-	    ]
-	}, function (err) {
-		if (err) {
-			fatal(err.message);
-		}
-
+	this.maap_parent.initAdmAndFetchAlarms(opts, function () {
 		self.maap_root.madm_adm.dumpProbeGroups(
 		    process.stdout, options);
 		self.maap_root.finiAdm();

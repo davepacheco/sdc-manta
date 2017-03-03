@@ -1,0 +1,36 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "moray" service
+#
+
+-
+    event: upset.manta.moray.moray-logscan
+    legacyName: moray-logscan
+    scope: 
+        service: moray
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                path: "/var/log/moray.log"
+                fields: 
+                    level: ERROR
+                threshold: 1
+                period: 60
+    ka: 
+        title: moray-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+

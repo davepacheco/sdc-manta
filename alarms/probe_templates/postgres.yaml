@@ -1,0 +1,191 @@
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2017, Joyent, Inc.
+#
+
+#
+# amon probes for the "postgres" service
+#
+
+-
+    event: upset.manta.postgres.database-dataset-space-running-low
+    legacyName: database dataset space running low
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: disk-usage
+            config: 
+                path: "/manatee/pg"
+                threshold: "20%"
+                interval: 3600
+    ka: 
+        title: database dataset space running low
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.manatee-logscan
+    legacyName: manatee-logscan
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: manatee-sitter
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: manatee-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.manatee-snapshotter-logscan
+    legacyName: manatee-snapshotter-logscan
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: manatee-snapshotter
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: manatee-snapshotter-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.manatee-backupserver-logscan
+    legacyName: manatee-backupserver-logscan
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: manatee-backupserver
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: manatee-backupserver-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.registrar-logscan
+    legacyName: registrar-logscan
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: bunyan-log-scan
+            config: 
+                smfServiceName: registrar
+                fields: 
+                    level: FATAL
+                threshold: 1
+                period: 60
+    ka: 
+        title: registrar-logscan
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.pg-dump-logscan
+    legacyName: "pg_dump-logscan"
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: log-scan
+            config: 
+                path: "/var/log/manatee/pg_dump.log"
+                match: 
+                    pattern: fatal
+                threshold: 1
+                period: 60
+    ka: 
+        title: "pg_dump-logscan"
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.manatee-stat
+    legacyName: manatee-stat
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: cmd
+            config: 
+                cmd: "/opt/smartdc/manatee/bin/manatee-stat-alarm.sh"
+                interval: 60
+                threshold: 5
+                period: 360
+                timeout: 60
+                stdoutMatch: 
+                    pattern: fail
+                    type: substring
+    ka: 
+        title: manatee-stat
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
+-
+    event: upset.manta.postgres.manatee-state-transition
+    legacyName: manatee-state-transition
+    scope: 
+        service: postgres
+    checks: 
+        - 
+            type: log-scan
+            config: 
+                path: "/var/svc/log/manta-application-manatee-sitter:default.log"
+                match: 
+                    pattern: finished transition
+                threshold: 1
+                period: 60
+    ka: 
+        title: manatee-state-transition
+        description: XXX-UNKNOWN
+        severity: XXX-UNKNOWN
+        response: XXX-UNKNOWN
+        impact: XXX-UNKNOWN
+        action: XXX-UNKNOWN
+
