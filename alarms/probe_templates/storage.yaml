@@ -78,16 +78,19 @@
         action: XXX-UNKNOWN
 
 -
+    # XXX should this move to ops?  in both namespace and file?
     event: upset.manta.storage.shrimp-nginx-ping
     legacyName: shrimp-nginx-ping
     scope: 
         service: storage
-        checkFrom: webapi
+        checkFrom: ops
     checks: 
         - 
             type: cmd
             config: 
-                cmd: "curl -m 5 -sf http://{{MANTA_STORAGE_ID}}/50x.html -o /dev/null"
+                autoEnv:
+                    - MANTA_STORAGE_ID
+                cmd: "curl -m 5 -sf http://$MANTA_STORAGE_ID/50x.html -o /dev/null"
                 interval: 60
                 threshold: 3
                 period: 300
