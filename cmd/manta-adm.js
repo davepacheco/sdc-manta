@@ -866,7 +866,7 @@ MantaAdmAlarm.prototype.do_verify = function (subcmd, opts, args, callback)
 
 		adm.fetchProbes({
 		    'concurrency': opts.concurrency
-		}, function (err) {
+		}, function onAmonConfigFetched(err) {
 			var result;
 
 			if (err) {
