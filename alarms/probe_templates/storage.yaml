@@ -78,12 +78,12 @@
         action: XXX-UNKNOWN
 
 -
-    # XXX should this move to ops?  in both namespace and file?
+    # XXX should this move to nameservice?  in both namespace and file?
     event: upset.manta.storage.shrimp-nginx-ping
     legacyName: shrimp-nginx-ping
     scope: 
         service: storage
-        checkFrom: ops
+        checkFrom: nameservice
     checks: 
         - 
             type: cmd
