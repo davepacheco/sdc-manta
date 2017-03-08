@@ -16,7 +16,7 @@
     event: upset.manta.compute.marlin-agent-logscan-error
     legacyName: marlin-agent-logscan-error
     scope: 
-        service: compute
+        service: storage
         global: true
     checks: 
         - 
@@ -39,7 +39,7 @@
     event: upset.manta.compute.marlin-agent-logscan-fatal
     legacyName: marlin-agent-logscan-fatal
     scope: 
-        service: compute
+        service: storage
         global: true
     checks: 
         - 
@@ -62,7 +62,7 @@
     event: upset.manta.compute.marlin-agent-logscan-core
     legacyName: marlin-agent-logscan-core
     scope: 
-        service: compute
+        service: storage
         global: true
     checks: 
         - 
@@ -85,7 +85,7 @@
     event: upset.manta.compute.logs-not-uploaded
     legacyName: logs not uploaded
     scope: 
-        service: compute
+        service: storage
         global: true
     checks: 
         - 
@@ -108,7 +108,7 @@
     event: upset.manta.compute.svcs--SMF-maintenance
     legacyName: "svcs: SMF maintenance"
     scope: 
-        service: compute
+        service: storage
         global: true
     checks: 
         - 
