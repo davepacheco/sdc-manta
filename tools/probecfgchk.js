@@ -18,7 +18,7 @@ var cmdutil = require('cmdutil');
 var vasync = require('vasync');
 var VError = require('verror');
 
-var priv_probe_template = require('../lib/alarms/probe_template');
+var alarm_metadata = require('../lib/alarms/metadata');
 var nerrors = 0;
 
 function main()
@@ -44,13 +44,14 @@ function validateOneFile(filename, callback)
 {
 	var pts;
 
-	pts = new priv_probe_template.ProbeTemplates();
+	pts = new alarm_metadata.MetadataLoader();
 	pts.loadFromFile(filename, function onLoaded() {
 		var errors;
 
 		errors = pts.errors();
 		nerrors += errors.length;
 
+		/* XXX commonize */
 		if (errors.length == 1) {
 			cmdutil.warn(errors[0]);
 		} else if (errors.length > 1) {
