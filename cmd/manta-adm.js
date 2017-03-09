@@ -755,7 +755,7 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 			self.maa_parent.madm_adm.fetchDeployed(stepcb);
 		},
 		function fetchAmon(self, stepcb) {
-			self.maa_parent.madm_adm.fetchAlarms(stepcb);
+			self.maa_parent.madm_adm.alarmsInit(stepcb);
 		}
 	    ]
 	}, function (err) {
@@ -824,7 +824,7 @@ MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 		options.omitHeader = true;
 
 	this.initAdmAndFetchAlarms(opts, function () {
-		self.maa_parent.madm_adm.dumpAlarms(process.stdout, options);
+		callback(new VError('not yet implemented!'));
 		self.maa_parent.finiAdm();
 	});
 };
@@ -930,7 +930,7 @@ MantaAdmAlarm.prototype.amonUpdateSubcommand = function (clioptions, dryrun,
 		},
 		function fetchProbes(_, stepcb) {
 			adm = root.madm_adm;
-			adm.fetchProbes({
+			adm.alarmsInitProbes({
 			    'concurrency': clioptions.concurrency
 			}, stepcb);
 		},
