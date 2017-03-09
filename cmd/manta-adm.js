@@ -853,48 +853,16 @@ MantaAdmAlarm.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
 
 MantaAdmAlarm.prototype.do_verify = function (subcmd, opts, args, callback)
 {
-	var self = this;
-
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
 		return;
 	}
 
-	this.initAdmAndFetchAlarms(opts, function () {
-		var root = self.maa_parent;
-		var adm = root.madm_adm;
-
-		adm.fetchProbes({
-		    'concurrency': opts.concurrency
-		}, function onAmonConfigFetched(err) {
-			var result;
-
-			if (err) {
-				fatal(err.message);
-			}
-
-			/* XXX */
-			result = adm.updateAmonConfig({
-			    'dryrun': true,
-			    'stream': process.stderr
-			});
-
-			if (result.error) {
-				fatal(result.error.message);
-			}
-
-			if (result.needsChanges) {
-				fatal('probe configuration is not up to date');
-			}
-
-			root.finiAdm();
-		});
-	});
+	this.amonUpdateSubcommand(opts, true, callback);
 };
 
 MantaAdmAlarm.prototype.do_verify.help = [
-    'Compare the probe and probe group definitions provided by this software ',
-    'with the list of probes and probe groups currently deployed.',
+    'Check that configured probes and probe groups are up to date.',
     '',
     'Usage:',
     '',
@@ -909,6 +877,122 @@ MantaAdmAlarm.prototype.do_verify.options = [ {
     'help': 'Number of concurrency requests to make',
     'default': 10
 } ];
+
+MantaAdmAlarm.prototype.do_update = function (subcmd, opts, args, callback)
+{
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	this.amonUpdateSubcommand(opts, opts.dryrun, callback);
+};
+
+MantaAdmAlarm.prototype.do_update.help = [
+    'Update and probes and probe groups that are out of date.',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm update OPTIONS',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_update.options = [ {
+    'names': [ 'confirm', 'y' ],
+    'type': 'bool',
+    'help': 'Bypass all confirmations (be careful!)'
+}, {
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrency requests to make',
+    'default': 10
+}, {
+    'names': [ 'dryrun', 'n' ],
+    'type': 'bool',
+    'help': 'Print what would be done without actually doing it.'
+} ];
+
+MantaAdmAlarm.prototype.amonUpdateSubcommand = function (clioptions, dryrun,
+    callback) {
+	var self = this;
+	var root, adm, plan;
+
+	assertplus.object(clioptions, 'clioptions');
+	assertplus.number(clioptions.concurrency, 'clioptions.concurrency');
+
+	root = self.maa_parent;
+	vasync.pipeline({
+	    'arg': null,
+	    'funcs': [
+		function init(_, stepcb) {
+			self.initAdmAndFetchAlarms(clioptions, stepcb);
+		},
+		function fetchProbes(_, stepcb) {
+			adm = root.madm_adm;
+			adm.fetchProbes({
+			    'concurrency': clioptions.concurrency
+			}, stepcb);
+		},
+		function generateAmonPlan(_, stepcb) {
+			plan = adm.amonUpdatePlanCreate();
+			if (plan instanceof Error) {
+				stepcb(plan);
+				return;
+			}
+
+			adm.amonUpdatePlanDump({
+			    'plan': plan,
+			    'stream': process.stderr,
+			    'verbose': false
+			});
+
+			if (!plan.needsChanges()) {
+				console.log('nothing to do');
+				stepcb();
+				return;
+			}
+
+			if (dryrun) {
+				console.log('To apply these changes, ' +
+				    'use the "update" subcommand without ' +
+				    'the -n/--dry-run option.');
+				stepcb();
+				return;
+			}
+
+			if (clioptions.confirm) {
+				stepcb();
+				return;
+			}
+
+			common.confirm(
+			    'Are you sure you want to proceed? (y/N): ',
+			    function (proceed) {
+				if (!proceed) {
+					stepcb(new Error('aborted by user'));
+				} else {
+					stepcb();
+				}
+			    });
+		},
+		function execAmonPlan(_, stepcb) {
+			if (dryrun || !plan.needsChanges()) {
+				stepcb();
+				return;
+			}
+
+			adm.amonUpdatePlanApply({
+			    'concurrency': clioptions.concurrency,
+			    'plan': plan
+			}, stepcb);
+		}
+	    ]
+	}, function (err) {
+		root.finiAdm();
+		callback(err);
+	});
+};
 
 
 function MantaAdmAlarmProbeGroup(parent)
