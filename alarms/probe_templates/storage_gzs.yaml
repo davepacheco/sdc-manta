@@ -14,7 +14,7 @@
 
 -
     event: upset.manta.marlin_agent.log_error
-    legacyName: marlin-agent-logscan-error, marlin-agent-logscan-fatal
+    legacyName: marlin-agent-logscan-error, marlin-agent-logscan-fatal, marlin-agent-logscan-core
     scope: 
         service: storage
         global: true
