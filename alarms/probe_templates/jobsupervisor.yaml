@@ -13,8 +13,8 @@
 #
 
 -
-    event: upset.manta.jobsupervisor.jobsupervisor-logscan-error
-    legacyName: jobsupervisor-logscan-error
+    event: upset.manta.jobsupervisor.log_error
+    legacyName: jobsupervisor-logscan-error, jobsupervisor-logscan-fatal, jobsupervisor-logscan-core
     scope: 
         service: jobsupervisor
     checks: 
@@ -26,20 +26,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: jobsupervisor-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.jobsupervisor.jobsupervisor-logscan-fatal
-    legacyName: jobsupervisor-logscan-fatal
-    scope: 
-        service: jobsupervisor
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -48,20 +34,6 @@
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
-        title: jobsupervisor-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.jobsupervisor.jobsupervisor-logscan-core
-    legacyName: jobsupervisor-logscan-core
-    scope: 
-        service: jobsupervisor
-    checks: 
         - 
             type: log-scan
             config: 
@@ -71,10 +43,14 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: jobsupervisor-logscan-core
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
+        title: '"jobsupervisor" logged an error'
+        description: The "jobsupervisor" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >
+            If the problem was transient, there may be no impact.  Otherwise,
+            some jobs may have experienced errors or additional latency.  It is
+            possible that some jobs are stuck.
+        action: >
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
