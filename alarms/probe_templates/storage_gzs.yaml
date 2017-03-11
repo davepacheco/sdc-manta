@@ -48,11 +48,11 @@
         description: The "marlin-agent" service has logged an error.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             If the problem was transient, there may be no impact.  Otherwise,
             some jobs may have experienced retries, errors, or additional
             latency.  It is possible that some jobs are stuck.
-        action: >
+        action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.
 
@@ -75,10 +75,10 @@
         title: Global zone log files not uploaded
         description: Some global zone log files have not been uploaded
         severity: minor
-        response: >
+        response: >-
             The system automatically retries hourly to upload any internal log
             files that have not yet been uploaded.
-        impact: >
+        impact: >-
             There is no impact to end-user service.  However, failure to upload
             files is often indicative of problems affecting end user requests.
                        
@@ -86,7 +86,7 @@
             and access logs for end users may be unavailable or incomplete until
             the affected logs are uploaded and the relevant metering jobs re-run
             by an operator.
-        action: >
+        action: >-
             Identify the reason for the failure and resolve the underlying
             issue.  If logs used for metering were affected, you may need to
             re-run the relevant metering jobs once all logs are available.
@@ -118,11 +118,11 @@
         description: One or more global zone SMF services are in maintenance
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             The impact depends on which services are in maintenance.  In some
             cases, overall request handling capacity may be reduced.  If enough
             instances are in maintenance, end users could experience errors.
-        action: >
+        action: >-
             In the affected global zones, use "svcs -xv" to identify the
             services in maintenance and see basic instructions for tracking down
             the problem.

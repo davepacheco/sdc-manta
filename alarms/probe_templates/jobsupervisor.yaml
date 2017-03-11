@@ -47,10 +47,10 @@
         description: The "jobsupervisor" service has logged an error.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             If the problem was transient, there may be no impact.  Otherwise,
             some jobs may have experienced errors or additional latency.  It is
             possible that some jobs are stuck.
-        action: >
+        action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.
