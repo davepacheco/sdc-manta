@@ -31,10 +31,10 @@
         description: The "electric-moray" service has logged an error.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             A small number of end-user requests may have failed.  Some job
             tasks may experience increased latency to dispatch.  If the problem
             persists, many requests and tasks may be affected.
-        action: >
+        action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.

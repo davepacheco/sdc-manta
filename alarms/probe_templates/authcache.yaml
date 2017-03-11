@@ -36,7 +36,7 @@
         description: The "mahi-replicator" service has logged an error.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             If the problem was transient, there may be no impact.  Otherwise,
             replication may be falling behind.  In that case, recent changes to
             user accounts, sub-users, roles, and ssh keys may not be reflected
@@ -44,7 +44,7 @@
             available, and those that have recently been deleted may still be
             working.  Service is unaffected for accounts, users, roles, and keys
             that have not changed recently.
-        action: >
+        action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.
 
@@ -68,10 +68,10 @@
         description: The "mahi-server" service has logged an error.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             Some end user requests may have failed due to authentiation
             failures.  The problem may be ongoing.
-        action: >
+        action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.
 
@@ -97,18 +97,18 @@
                 period: 60
     ka: 
         title: Authcache Redis ping failed
-        description: >
+        description: >-
             A periodic ping of an authentication cache's redis instance has
             failed.
         severity: critical
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             Some requests may be failing due to authentication failures.  The
             impact is likely to be proportional to the number of "authcache"
             instances that have experienced this problem.  Note that
             authentication information is cached for a few minutes, so requests
             may not start failing immediately.
-        action: >
+        action: >-
             Root-cause the failure and resolve the underlying issue.  You may
             need to restart the Redis service.
 
@@ -129,17 +129,17 @@
                 timeout: 29
     ka:
         title: Authcache v1 replication has fallen behind
-        description: >
+        description: >-
             Replication for the v1 authentication cache has fallen behind.
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             Recent changes to user accounts, sub-users, roles, and ssh keys may
             not be reflected in Manta.  Newly-created accounts, users, roles,
             and keys may not be available, and those that have recently been
             deleted may still be working.  Service is unaffected for accounts,
             users, roles, and keys that have not changed recently.
-        action: >
+        action: >-
             Check the log for the "mahi" SMF service inside the affected
             authcache zone.  If necessary, restart the service.
 
@@ -166,13 +166,13 @@
         description: Replication for the authentication cache has fallen behind
         severity: major
         response: No automated response will be taken.
-        impact: >
+        impact: >-
             Recent changes to user accounts, sub-users, roles, and ssh keys may
             not be reflected in Manta.  Newly-created accounts, users, roles,
             and keys may not be available, and those that have recently been
             deleted may still be working.  Service is unaffected for accounts,
             users, roles, and keys that have not changed recently.
-        action: >
+        action: >-
             Check the log for the "mahi-replicator" SMF service inside the
             affected authcache zone.  If necessary, restart the service.
 

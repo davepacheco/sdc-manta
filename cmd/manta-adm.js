@@ -767,65 +767,172 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 	});
 };
 
-MantaAdmAlarm.prototype.do_get = function (subcmd, opts, args, callback)
+MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
 {
+	var self = this;
+
 	if (args.length < 1) {
 		callback(new Error('expected ALARMID'));
 		return;
 	}
 
-	if (args.length > 1) {
-		callback(new Error('unexpected arguments'));
-		return;
-	}
-
+	/*
+	 * XXX We should be able to fetch details about closed alarms.  This
+	 * currently only looks up information in the *open* alarms that we've
+	 * already fetched.
+	 */
 	this.initAdmAndFetchAlarms(opts, function () {
-		/* XXX */
-		throw (new Error('not yet implemented'));
-		// self.maa_parent.finiAdm();
+		var nerrors = 0;
+		args.forEach(function (id) {
+			var error;
+			error = self.maa_parent.madm_adm.alarmPrint({
+			    'id': id,
+			    'stream': process.stdout,
+			    'nmaxfaults': 1
+			});
+
+			if (error instanceof Error) {
+				console.error('warn: %s', error.message);
+			}
+
+			console.log('');
+		});
+
+		if (nerrors > 0) {
+			process.exit(1);
+		}
+		self.maa_parent.finiAdm();
 	});
 };
 
-MantaAdmAlarm.prototype.do_get.help = [
-    'Fetch details about one alarm',
+MantaAdmAlarm.prototype.do_details.help = [
+    'Print details about an alarm',
     '',
     'Usage:',
     '',
-    '    manta-adm alarm get ALARMID',
+    '    manta-adm alarm details ALARMID...',
     '',
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_get.options = [];
+MantaAdmAlarm.prototype.do_details.options = [];
+
+MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
+{
+	var self = this;
+
+	if (args.length < 1) {
+		callback(new Error('expected ALARMID'));
+		return;
+	}
+
+	/*
+	 * XXX We should be able to fetch details about closed alarms.  This
+	 * currently only looks up information in the *open* alarms that we've
+	 * already fetched.
+	 * XXX This also duplicates code from "details"
+	 */
+	this.initAdmAndFetchAlarms(opts, function () {
+		var nerrors = 0;
+		args.forEach(function (id) {
+			var error;
+			error = self.maa_parent.madm_adm.alarmPrint({
+			    'id': id,
+			    'stream': process.stdout
+			});
+
+			if (error instanceof Error) {
+				console.error('warn: %s', error.message);
+			}
+
+			console.log('');
+		});
+
+		if (nerrors > 0) {
+			process.exit(1);
+		}
+		self.maa_parent.finiAdm();
+	});
+};
+
+MantaAdmAlarm.prototype.do_faults.help = [
+    'Print information about all of an alarm\'s faults',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm fault ALARMID...',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_faults.options = [];
+
+MantaAdmAlarm.prototype.do_ka = function (subcmd, opts, args, callback)
+{
+	var self = this;
+
+	if (args.length < 1) {
+		callback(new Error('expected EVENT_NAME'));
+		return;
+	}
+
+	this.initAdmAndFetchAlarms(opts, function () {
+		var nerrors = 0;
+		args.forEach(function (eventName) {
+			var error;
+			error = self.maa_parent.madm_adm.alarmKaPrint({
+			    'eventName': eventName,
+			    'stream': process.stdout
+			});
+
+			if (error instanceof Error) {
+				console.error('warn: %s', error.message);
+			}
+
+			console.log('');
+		});
+
+		if (nerrors > 0) {
+			process.exit(1);
+		}
+		self.maa_parent.finiAdm();
+	});
+};
+
+MantaAdmAlarm.prototype.do_ka.help = [
+    'Print information about a possible fault',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm ka EVENT_NAME',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_ka.options = [];
 
 
 MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 {
 	var self = this;
 	var options = {};
-	var selected;
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
 		return;
 	}
 
-	if (opts.columns) {
-		selected = checkColumns(madm.alarmColumnNames(), opts.columns);
-		if (selected instanceof Error) {
-			callback(selected);
-			return;
-		}
-
-		options.columns = selected;
+	options = listPrepareArgs(opts, madm.alarmColumnNames());
+	if (options instanceof Error) {
+		callback(options);
+		return;
 	}
 
-	if (opts.omit_header)
-		options.omitHeader = true;
-
+	options.stream = process.stdout;
 	this.initAdmAndFetchAlarms(opts, function () {
-		callback(new VError('not yet implemented!'));
+		self.maa_parent.madm_adm.alarmsList(options);
 		self.maa_parent.finiAdm();
+		callback();
 	});
 };
 
@@ -1062,6 +1169,37 @@ MantaAdmAlarmProbeGroup.prototype.do_list.options = [ {
 } ];
 
 
+/*
+ * Named arguments:
+ *
+ *     opts		options provided by cmdln
+ *
+ *     allowed		allowed column names
+ *
+ * Returns either an Error describing invalid command-line arguments or an
+ * object with "columns" and "omitHeader" set according to the options.
+ * XXX abstract other uses of checkColumns to use this
+ */
+function listPrepareArgs(opts, allowed)
+{
+	var options, selected;
+
+	options = {};
+	if (opts.columns) {
+		selected = checkColumns(allowed, opts.columns);
+		if (selected instanceof Error) {
+			return (selected);
+		}
+
+		options.columns = selected;
+	}
+
+	if (opts.omit_header) {
+		options.omitHeader = true;
+	}
+
+	return (options);
+}
 
 function checkColumns(allowed, columns)
 {
