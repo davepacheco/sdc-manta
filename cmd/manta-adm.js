@@ -13,7 +13,7 @@
 /*
  * manta-adm.js: manage manta deployments.  Provides subcommands:
  *
- *     amon		view and configure information about alarms
+ *     alarm		view and configure information about alarms
  *
  *     cn		show information about CNs
  *
@@ -258,8 +258,7 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 };
 
 MantaAdm.prototype.do_genconfig.help =
-    'Generate a configuration for COAL or lab deployment or for \n' +
-    'a larger deployment.\n' +
+    'Generate a configuration for COAL, lab, or larger deployment.\n' +
     '\n' +
     'Usage:\n' +
     '\n' +
@@ -767,6 +766,8 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 	});
 };
 
+MantaAdmAlarm.prototype.do_config = MantaAdmAlarmConfig;
+
 MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
 {
 	var self = this;
@@ -911,7 +912,6 @@ MantaAdmAlarm.prototype.do_ka.help = [
 
 MantaAdmAlarm.prototype.do_ka.options = [];
 
-
 MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 {
 	var self = this;
@@ -956,9 +956,24 @@ MantaAdmAlarm.prototype.do_list.options = [ {
     'help': 'Select columns for output (see below)'
 } ];
 
-MantaAdmAlarm.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
 
-MantaAdmAlarm.prototype.do_verify = function (subcmd, opts, args, callback)
+function MantaAdmAlarmConfig(parent)
+{
+	this.maac_parent = parent;
+	this.maac_root = parent.maa_parent;
+
+	cmdln.Cmdln.call(this, {
+	    'name': 'config',
+	    'desc': 'Manage probe and probe group configuration'
+	});
+}
+
+util.inherits(MantaAdmAlarmConfig, cmdln.Cmdln);
+
+MantaAdmAlarmConfig.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
+
+MantaAdmAlarmConfig.prototype.do_verify =
+    function (subcmd, opts, args, callback)
 {
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
@@ -968,24 +983,25 @@ MantaAdmAlarm.prototype.do_verify = function (subcmd, opts, args, callback)
 	this.amonUpdateSubcommand(opts, true, callback);
 };
 
-MantaAdmAlarm.prototype.do_verify.help = [
+MantaAdmAlarmConfig.prototype.do_verify.help = [
     'Check that configured probes and probe groups are up to date.',
     '',
     'Usage:',
     '',
-    '    manta-adm alarm verify OPTIONS',
+    '    manta-adm alarm config verify OPTIONS',
     '',
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_verify.options = [ {
+MantaAdmAlarmConfig.prototype.do_verify.options = [ {
     'names': [ 'concurrency' ],
     'type': 'positiveInteger',
     'help': 'Number of concurrency requests to make',
     'default': 10
 } ];
 
-MantaAdmAlarm.prototype.do_update = function (subcmd, opts, args, callback)
+MantaAdmAlarmConfig.prototype.do_update =
+    function (subcmd, opts, args, callback)
 {
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
@@ -995,17 +1011,17 @@ MantaAdmAlarm.prototype.do_update = function (subcmd, opts, args, callback)
 	this.amonUpdateSubcommand(opts, opts.dryrun, callback);
 };
 
-MantaAdmAlarm.prototype.do_update.help = [
+MantaAdmAlarmConfig.prototype.do_update.help = [
     'Update and probes and probe groups that are out of date.',
     '',
     'Usage:',
     '',
-    '    manta-adm alarm update OPTIONS',
+    '    manta-adm alarm config update OPTIONS',
     '',
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_update.options = [ {
+MantaAdmAlarmConfig.prototype.do_update.options = [ {
     'names': [ 'confirm', 'y' ],
     'type': 'bool',
     'help': 'Bypass all confirmations (be careful!)'
@@ -1020,20 +1036,21 @@ MantaAdmAlarm.prototype.do_update.options = [ {
     'help': 'Print what would be done without actually doing it.'
 } ];
 
-MantaAdmAlarm.prototype.amonUpdateSubcommand = function (clioptions, dryrun,
-    callback) {
+MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
+    function (clioptions, dryrun, callback) {
 	var self = this;
-	var root, adm, plan;
+	var root, parent, adm, plan;
 
 	assertplus.object(clioptions, 'clioptions');
 	assertplus.number(clioptions.concurrency, 'clioptions.concurrency');
 
-	root = self.maa_parent;
+	root = self.maac_root;
+	parent = self.maac_parent;
 	vasync.pipeline({
 	    'arg': null,
 	    'funcs': [
 		function init(_, stepcb) {
-			self.initAdmAndFetchAlarms(clioptions, stepcb);
+			parent.initAdmAndFetchAlarms(clioptions, stepcb);
 		},
 		function fetchProbes(_, stepcb) {
 			adm = root.madm_adm;
@@ -1105,7 +1122,7 @@ MantaAdmAlarm.prototype.amonUpdateSubcommand = function (clioptions, dryrun,
 function MantaAdmAlarmProbeGroup(parent)
 {
 	this.maap_parent = parent;
-	this.maap_root = parent.maa_parent;
+	this.maap_root = parent.maac_root;
 
 	cmdln.Cmdln.call(this, {
 	    'name': 'probegroup',
@@ -1141,7 +1158,7 @@ MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
 	if (opts.omit_header)
 		options.omitHeader = true;
 
-	this.maap_parent.initAdmAndFetchAlarms(opts, function () {
+	this.maap_parent.maac_parent.initAdmAndFetchAlarms(opts, function () {
 		self.maap_root.madm_adm.dumpProbeGroups(
 		    process.stdout, options);
 		self.maap_root.finiAdm();
