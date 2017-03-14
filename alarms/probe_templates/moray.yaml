@@ -13,7 +13,7 @@
 #
 
 -
-    event: upset.manta.moray.moray-logscan
+    event: upset.manta.moray.log_error
     legacyName: moray-logscan
     scope: 
         service: moray
@@ -27,10 +27,15 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: moray-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"moray" logged an error'
+        description: The "moray" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            some end user requests may be experiencing errors or some jobs may
+            be experiencing errors or additional latency.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
