@@ -13,7 +13,7 @@
 #
 
 -
-    event: upset.manta.loadbalancer.haproxy-memory-size--1G-
+    event: upset.manta.loadbalancer.haproxy.memory
     legacyName: "haproxy memory size (1G)"
     scope: 
         service: loadbalancer
@@ -28,15 +28,21 @@
                 threshold: 2
                 period: 360
     ka: 
-        title: "haproxy memory size (1G)"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Loadbalancer "haproxy" using too much memory
+        description: >-
+            Loadbalancer "haproxy" processes are using more memory than
+            expected.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            There is no immediate impact.  However, if processes are leaking
+            memory, then performance may degrade and errors may be induced in
+            end-user requests.
+        action:
+            Check the "haproxy" process for memory leaks.
 
 -
-    event: upset.manta.loadbalancer.stud-memory-size--1G-
+    event: upset.manta.loadbalancer.stud.memory
     legacyName: "stud memory size (1G)"
     scope: 
         service: loadbalancer
@@ -49,15 +55,20 @@
                 threshold: 2
                 period: 360
     ka: 
-        title: "stud memory size (1G)"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Loadbalancer "stud" using too much memory
+        description: >-
+            Loadbalancer "stud" processes are using more memory than expected.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            There is no immediate impact.  However, if processes are leaking
+            memory, then performance may degrade and errors may be induced in
+            end-user requests.
+        action:
+            Check the "stud" process for memory leaks.
 
 -
-    event: upset.manta.loadbalancer.muppet-memory-size--512M-
+    event: upset.manta.loadbalancer.muppet.memory
     legacyName: "muppet memory size (512M)"
     scope: 
         service: loadbalancer
@@ -70,15 +81,16 @@
                 threshold: 2
                 period: 360
     ka: 
-        title: "muppet memory size (512M)"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Loadbalancer "muppet" using too much memory
+        description: >-
+            Loadbalancer "muppet" processes are using more memory than expected.
+        severity: minor
+        response: No automated response will be taken.
+        impact: There is no immediate impact.
+        action: Check the "muppet" process for memory leaks.
 
 -
-    event: upset.manta.loadbalancer.muppet-logscan
+    event: upset.manta.loadbalancer.muppet.log_error
     legacyName: muppet-logscan
     scope: 
         service: loadbalancer
@@ -92,15 +104,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: muppet-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"muppet" logged an error'
+        description: The "muppet" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            loadbalancers may not be correctly identifying when "webapi"
+            instances have come and gone.  They may be continuing to use old
+            webapi instances or ignoring new instances.
+        action:
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.loadbalancer.no-backend-servers
+    event: upset.manta.loadbalancer.no_backends
     legacyName: no backend servers
     scope: 
         service: loadbalancer
@@ -113,10 +131,15 @@
                 threshold: 2
                 period: 120
     ka: 
-        title: no backend servers
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
+        title: Loadbalancer has no backends
+        description: A loadbalancer has no working backends
+        severity: critical
+        response: No automated response will be taken.
+        impact:
+            End user requests may be experiencing very high error rates.
+        action:
+            Determine why the loadbalancer has no backends and resolve the
+            underlying issue.  First, ensure that there are working "webapi"
+            instances.  If so, identify whether they're registered in ZooKeeper.
+            If so, see if the Muppet instance in this loadbalancer zone has
+            found them.

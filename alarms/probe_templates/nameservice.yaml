@@ -13,7 +13,7 @@
 #
 
 -
-    event: upset.manta.nameservice.ZK--logscan--ERROR-
+    event: upset.manta.nameservice.zookeeper.log_error
     legacyName: "ZK: logscan 'ERROR'"
     scope: 
         service: nameservice
@@ -27,15 +27,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: "ZK: logscan 'ERROR'"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"zookeeper" logged an error'
+        description: The "zookeeper" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            Manatee shard fault tolerance may be affected and service discovery
+            may be offline.  Services should continue to function, but with
+            significantly reduced ability to respond to other failures.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.nameservice.ZK--logscan--Connection-refused-
+    event: upset.manta.nameservice.zookeeper.log_connrefused
     legacyName: "ZK: logscan 'Connection refused'"
     scope: 
         service: nameservice
@@ -49,15 +55,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: "ZK: logscan 'Connection refused'"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"zookeeper" logged a connection failure'
+        description: The "zookeeper" service logged a connection failure.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            Manatee shard fault tolerance may be affected and service discovery
+            may be offline.  Services should continue to function, but with
+            significantly reduced ability to respond to other failures.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.nameservice.binder--logscan
+    event: upset.manta.nameservice.binder.log_error
     legacyName: "binder: logscan"
     scope: 
         service: nameservice
@@ -71,36 +83,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: "binder: logscan"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"binder" logged an error'
+        description: The "binder" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            service discovery may be offline.  Services should continue to
+            function, but with significantly reduced ability to respond to other
+            failures.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.nameservice.mbackup--logs-not-uploaded
-    legacyName: "mbackup: logs not uploaded"
-    scope: 
-        service: nameservice
-    checks: 
-        - 
-            type: cmd
-            config: 
-                cmd: "test ! $(find /var/log/manta/upload -type f | wc -l) -gt 0"
-                interval: 300
-                threshold: 5
-                period: 1800
-    ka: 
-        title: "mbackup: logs not uploaded"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.nameservice.ZK--ruok
+    event: upset.manta.nameservice.zookeeper.notok
     legacyName: "ZK: ruok"
     scope: 
         service: nameservice
@@ -115,10 +112,15 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: "ZK: ruok"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: ZooKeeper not okay
+        description: ZooKeeper reports that it is not okay
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            If the problem was transient, there may be no impact.  Otherwise,
+            Manatee shard fault tolerance may be affected and service discovery
+            may be offline.  Services should continue to function, but with
+            significantly reduced ability to respond to other failures.
+        action: >-
+            Determine the scope of the problem and resolve the underlying issue.
 
