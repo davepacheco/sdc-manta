@@ -1075,6 +1075,36 @@ MantaAdmAlarm.prototype.do_notify.options = [ {
     'default': 10
 } ];
 
+MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
+{
+	var parent;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	parent = this.maa_parent;
+	this.initAdmAndFetchAlarms(opts, function () {
+		var showArgs = { 'stream': process.stdout };
+		parent.madm_adm.alarmsShow(showArgs);
+		parent.finiAdm();
+		callback();
+	});
+};
+
+MantaAdmAlarm.prototype.do_show.help = [
+    'Summarize open alarms',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm show',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_show.options = [];
+
 
 function MantaAdmAlarmConfig(parent)
 {

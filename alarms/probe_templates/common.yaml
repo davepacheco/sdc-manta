@@ -164,7 +164,7 @@
                 period: 60
                 timeout: 30
     ka: 
-        title: $service SMF services in maintenance
+        title: SMF service in maintenance
         description: One or more SMF services are in maintenance
         severity: major
         response: No automated response will be taken.
