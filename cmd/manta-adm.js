@@ -766,6 +766,52 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 	});
 };
 
+MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
+{
+	var parent;
+
+	if (args.length < 1) {
+		callback(new Error('expected ALARMID'));
+		return;
+	}
+
+	parent = this.maa_parent;
+	this.initAdmAndFetchAlarms(opts, function () {
+		var adm = parent.madm_adm;
+		adm.alarmsClose({
+		    'alarmIds': args,
+		    'concurrency': opts.concurrency
+		}, function (err, errors) {
+		    errors.forEach(function (e) {
+			console.error('error: %s', e.message);
+		    });
+
+		    if (errors.length > 0) {
+			process.exit(1);
+		    }
+
+		    parent.finiAdm();
+		});
+	});
+};
+
+MantaAdmAlarm.prototype.do_close.help = [
+    'Close open alarms',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm close ALARMID...',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_close.options = [ {
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrent requests to make',
+    'default': 10
+} ];
+
 MantaAdmAlarm.prototype.do_config = MantaAdmAlarmConfig;
 
 MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
@@ -996,7 +1042,7 @@ MantaAdmAlarmConfig.prototype.do_verify.help = [
 MantaAdmAlarmConfig.prototype.do_verify.options = [ {
     'names': [ 'concurrency' ],
     'type': 'positiveInteger',
-    'help': 'Number of concurrency requests to make',
+    'help': 'Number of concurrent requests to make',
     'default': 10
 } ];
 
@@ -1213,6 +1259,8 @@ function listPrepareArgs(opts, allowed)
 
 	if (opts.omit_header) {
 		options.omitHeader = true;
+	} else {
+		options.omitHeader = false;
 	}
 
 	return (options);
