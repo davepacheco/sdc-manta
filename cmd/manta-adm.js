@@ -865,6 +865,37 @@ MantaAdmAlarm.prototype.do_details.help = [
 
 MantaAdmAlarm.prototype.do_details.options = [];
 
+MantaAdmAlarm.prototype.do_event = function (subcmd, opts, args, callback)
+{
+	var self = this;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	/* XXX does not need to init adm or alarms, really */
+	this.initAdmAndFetchAlarms(opts, function () {
+		self.maa_parent.madm_adm.alarmEventsPrint({
+		    'stream': process.stdout
+		});
+		self.maa_parent.finiAdm();
+		callback();
+	});
+};
+
+MantaAdmAlarm.prototype.do_event.help = [
+    'List known event names (from metadata)',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm event',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_event.options = [];
+
 MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 {
 	var self = this;
