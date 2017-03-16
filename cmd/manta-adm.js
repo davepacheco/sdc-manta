@@ -989,7 +989,9 @@ MantaAdmAlarm.prototype.do_list.help = [
     '',
     '    manta-adm alarm list OPTIONS',
     '',
-    '{{options}}'
+    '{{options}}',
+    '',
+    'Available columns for -o:\n    ' + madm.alarmColumnNames().join(', ')
 ].join('\n');
 
 MantaAdmAlarm.prototype.do_list.options = [ {
@@ -1198,31 +1200,23 @@ MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
 {
 	var self = this;
 	var options = {};
-	var selected;
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
 		return;
 	}
 
-	if (opts.columns) {
-		selected = checkColumns(
-		    madm.probeGroupColumnNames(), opts.columns);
-		if (selected instanceof Error) {
-			callback(selected);
-			return;
-		}
-
-		options.columns = selected;
+	options = listPrepareArgs(opts, madm.probeGroupColumnNames());
+	if (options instanceof Error) {
+		callback(options);
+		return;
 	}
 
-	if (opts.omit_header)
-		options.omitHeader = true;
-
+	options.stream = process.stdout;
 	this.maap_parent.maac_parent.initAdmAndFetchAlarms(opts, function () {
-		self.maap_root.madm_adm.dumpProbeGroups(
-		    process.stdout, options);
+		self.maap_root.madm_adm.alarmsProbeGroupsList(options);
 		self.maap_root.finiAdm();
+		callback();
 	});
 };
 
@@ -1233,7 +1227,10 @@ MantaAdmAlarmProbeGroup.prototype.do_list.help = [
     '',
     '    manta-adm alarm probegroup list OPTIONS',
     '',
-    '{{options}}'
+    '{{options}}',
+    '',
+    'Available columns for -o:\n',
+    '    ' + madm.probeGroupColumnNames().join(', ')
 ].join('\n');
 
 MantaAdmAlarmProbeGroup.prototype.do_list.options = [ {
