@@ -1018,6 +1018,48 @@ util.inherits(MantaAdmAlarmConfig, cmdln.Cmdln);
 
 MantaAdmAlarmConfig.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
 
+MantaAdmAlarmConfig.prototype.do_update =
+    function (subcmd, opts, args, callback)
+{
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	this.amonUpdateSubcommand(opts, opts.dryrun, callback);
+};
+
+MantaAdmAlarmConfig.prototype.do_update.help = [
+    'Update and probes and probe groups that are out of date.',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm config update OPTIONS',
+    '    manta-adm alarm config update OPTIONS --unconfigure',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarmConfig.prototype.do_update.options = [ {
+    'names': [ 'confirm', 'y' ],
+    'type': 'bool',
+    'help': 'Bypass all confirmations (be careful!)'
+}, {
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrency requests to make',
+    'default': 10
+}, {
+    'names': [ 'dryrun', 'n' ],
+    'type': 'bool',
+    'help': 'Print what would be done without actually doing it.'
+}, {
+    'names': [ 'unconfigure' ],
+    'type': 'bool',
+    'help': 'Remove all probes and probe groups instead of updating them',
+    'default': false
+} ];
+
 MantaAdmAlarmConfig.prototype.do_verify =
     function (subcmd, opts, args, callback)
 {
@@ -1044,42 +1086,11 @@ MantaAdmAlarmConfig.prototype.do_verify.options = [ {
     'type': 'positiveInteger',
     'help': 'Number of concurrent requests to make',
     'default': 10
-} ];
-
-MantaAdmAlarmConfig.prototype.do_update =
-    function (subcmd, opts, args, callback)
-{
-	if (args.length > 0) {
-		callback(new Error('unexpected arguments'));
-		return;
-	}
-
-	this.amonUpdateSubcommand(opts, opts.dryrun, callback);
-};
-
-MantaAdmAlarmConfig.prototype.do_update.help = [
-    'Update and probes and probe groups that are out of date.',
-    '',
-    'Usage:',
-    '',
-    '    manta-adm alarm config update OPTIONS',
-    '',
-    '{{options}}'
-].join('\n');
-
-MantaAdmAlarmConfig.prototype.do_update.options = [ {
-    'names': [ 'confirm', 'y' ],
-    'type': 'bool',
-    'help': 'Bypass all confirmations (be careful!)'
 }, {
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrency requests to make',
-    'default': 10
-}, {
-    'names': [ 'dryrun', 'n' ],
+    'names': [ 'unconfigure' ],
     'type': 'bool',
-    'help': 'Print what would be done without actually doing it.'
+    'help': 'Remove all probes and probe groups instead of updating them',
+    'default': false
 } ];
 
 MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
@@ -1089,6 +1100,7 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 
 	assertplus.object(clioptions, 'clioptions');
 	assertplus.number(clioptions.concurrency, 'clioptions.concurrency');
+	assertplus.bool(clioptions.unconfigure, 'clioptions.unconfigure');
 
 	root = self.maac_root;
 	parent = self.maac_parent;
@@ -1105,7 +1117,10 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 			}, stepcb);
 		},
 		function generateAmonPlan(_, stepcb) {
-			plan = adm.amonUpdatePlanCreate();
+			var options = {
+				unconfigure: clioptions.unconfigure
+			};
+			plan = adm.amonUpdatePlanCreate(options);
 			if (plan instanceof Error) {
 				stepcb(plan);
 				return;
