@@ -1121,6 +1121,54 @@ util.inherits(MantaAdmAlarmConfig, cmdln.Cmdln);
 
 MantaAdmAlarmConfig.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
 
+MantaAdmAlarmConfig.prototype.do_show = function (subcmd, opts, args, callback)
+{
+	var root, parent, adm;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	root = this.maac_root;
+	parent = this.maac_parent;
+	parent.initAdmAndFetchAlarms(opts, function () {
+		adm = root.madm_adm;
+		adm.alarmsInitProbes({
+		    'concurrency': opts.concurrency
+		}, function (err) {
+			if (err) {
+				fatal(err.message);
+			}
+
+			adm.alarmConfigShow({
+			    'stream': process.stdout
+			});
+
+			root.finiAdm();
+			callback();
+		});
+	});
+
+};
+
+MantaAdmAlarmConfig.prototype.do_show.help = [
+    'Summarize configured probes and probe groups',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm config show',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarmConfig.prototype.do_show.options = [ {
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrency requests to make',
+    'default': 10
+} ];
+
 MantaAdmAlarmConfig.prototype.do_update =
     function (subcmd, opts, args, callback)
 {
