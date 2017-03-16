@@ -791,6 +791,7 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 		    }
 
 		    parent.finiAdm();
+		    callback();
 		});
 	});
 };
@@ -1002,6 +1003,76 @@ MantaAdmAlarm.prototype.do_list.options = [ {
     'names': [ 'columns', 'o' ],
     'type': 'arrayOfString',
     'help': 'Select columns for output (see below)'
+} ];
+
+MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
+{
+	var parent;
+	var allowedArg0 = {
+	    'enabled': true,
+	    'enable': true,
+	    'on': true,
+	    'true': true,
+	    'yes': true,
+
+	    'disabled': false,
+	    'disable': false,
+	    'off': false,
+	    'false': false,
+	    'no': false
+	};
+
+	if (args.length < 2) {
+		callback(new Error('expected arguments'));
+		return;
+	}
+
+	if (!allowedArg0.hasOwnProperty(args[0])) {
+		callback(new Error('expected "on" or "off"'));
+		return;
+	}
+
+	parent = this.maa_parent;
+	this.initAdmAndFetchAlarms(opts, function () {
+		var adm = parent.madm_adm;
+		adm.alarmsUpdateNotification({
+		    'alarmIds': args.slice(1),
+		    'concurrency': opts.concurrency,
+		    'suppressed': !allowedArg0[args[0]]
+		}, function (err, errors) {
+			/*
+			 * XXX commonize and use MultiError functions?
+			 */
+			errors.forEach(function (e) {
+				console.error('error: %s', e.message);
+			});
+
+			if (errors.length > 0) {
+				process.exit(1);
+			}
+
+			parent.finiAdm();
+			callback();
+		});
+	});
+};
+
+MantaAdmAlarm.prototype.do_notify.help = [
+    'Enable or disable alarm notifications',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm notify on|off ALARMID...',
+    '',
+    '{{options}}'
+].join('\n');
+
+MantaAdmAlarm.prototype.do_notify.options = [ {
+    /* XXX commonize */
+    'names': [ 'concurrency' ],
+    'type': 'positiveInteger',
+    'help': 'Number of concurrent requests to make',
+    'default': 10
 } ];
 
 
