@@ -876,8 +876,9 @@ MantaAdmAlarm.prototype.do_event = function (subcmd, opts, args, callback)
 
 	/* XXX does not need to init adm or alarms, really */
 	this.initAdmAndFetchAlarms(opts, function () {
-		self.maa_parent.madm_adm.alarmEventsPrint({
-		    'stream': process.stdout
+		var events = self.maa_parent.madm_adm.alarmEventNames();
+		events.forEach(function (eventName) {
+			console.log(eventName);
 		});
 		self.maa_parent.finiAdm();
 		callback();
@@ -950,14 +951,17 @@ MantaAdmAlarm.prototype.do_ka = function (subcmd, opts, args, callback)
 {
 	var self = this;
 
-	if (args.length < 1) {
-		callback(new Error('expected EVENT_NAME'));
-		return;
-	}
-
 	this.initAdmAndFetchAlarms(opts, function () {
-		var nerrors = 0;
-		args.forEach(function (eventName) {
+		var events, nerrors;
+
+		if (args.length === 0) {
+			events = self.maa_parent.madm_adm.alarmEventNames();
+		} else {
+			events = args;
+		}
+
+		nerrors = 0;
+		events.forEach(function (eventName) {
 			var error;
 			error = self.maa_parent.madm_adm.alarmKaPrint({
 			    'eventName': eventName,
