@@ -13,7 +13,7 @@
 #
 
 -
-    event: upset.manta.postgres.database-dataset-space-running-low
+    event: upset.manta.postgres.db_filesystem_almost_full
     legacyName: database dataset space running low
     scope: 
         service: postgres
@@ -25,15 +25,20 @@
                 threshold: "20%"
                 interval: 3600
     ka: 
-        title: database dataset space running low
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Database filesystem almost full
+        description: A database filesystem is running low on free space
+        severity: critical
+        response: No automated response will be taken.
+        impact: >-
+            There is no immediate impact, but if the filesystem fills up,
+            service may become severely degraded.  End user requests may
+            experience high error rates or increased latency.
+        action: >-
+            Identify the cause of excessive disk usage and resolve the
+            underlying issue.
 
 -
-    event: upset.manta.postgres.manatee-logscan
+    event: upset.manta.postgres.sitter.log_error
     legacyName: manatee-logscan
     scope: 
         service: postgres
@@ -47,15 +52,17 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: manatee-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"manatee-sitter" logged an error'
+        description: The "manatee-sitter" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: Unknown.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.postgres.manatee-snapshotter-logscan
+    event: upset.manta.postgres.snapshotter.log_error
     legacyName: manatee-snapshotter-logscan
     scope: 
         service: postgres
@@ -69,15 +76,22 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: manatee-snapshotter-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"manatee-snapshotter" logged an error'
+        description: The "manatee-snapshotter" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            There is no immediate impact, but if snapshots are not being created
+            regularly, then it may impossible to rebuild a Manatee peer and
+            restore fault tolerance after a takeover event.  If snapshots are
+            not being destroyed, disk space may become exhausted, resulting in
+            significant service degradation.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.postgres.manatee-backupserver-logscan
+    event: upset.manta.postgres.backupserver.log_error
     legacyName: manatee-backupserver-logscan
     scope: 
         service: postgres
@@ -91,37 +105,20 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: manatee-backupserver-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"manatee-backupserver" logged an error'
+        description: The "manatee-backupserver" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            There is no immediate impact, but this service is required for
+            Manatee rebuilds, which are necessary to restore fault tolerance
+            after a takeover event.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.postgres.registrar-logscan
-    legacyName: registrar-logscan
-    scope: 
-        service: postgres
-    checks: 
-        - 
-            type: bunyan-log-scan
-            config: 
-                smfServiceName: registrar
-                fields: 
-                    level: FATAL
-                threshold: 1
-                period: 60
-    ka: 
-        title: registrar-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.postgres.pg-dump-logscan
+    event: upset.manta.postgres.pg_dump.log_error
     legacyName: "pg_dump-logscan"
     scope: 
         service: postgres
@@ -135,15 +132,22 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: "pg_dump-logscan"
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"pg_dump" logged an error'
+        description: The "pg_dump" service has logged an error.
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            The daily backup for this metadata shard may be missing.  As a
+            result, the garbage collection, auditing, and metering pipelines may
+            not have completed.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.postgres.manatee-stat
+    # XXX It would be far preferable if this alarm was one per shard
+    # XXX Given that it's not, should we make it one per zone?
+    event: upset.manta.postgres.shard_unhealthy
     legacyName: manatee-stat
     scope: 
         service: postgres
@@ -160,15 +164,26 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: manatee-stat
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Metadata shard is unhealthy
+        description: A metadata shard is unhealthy
+        severity: critical
+        response: No automated response will be taken.
+        impact: >-
+            If the shard is completely offline, then end-user requests or job
+            tasks operating on objects whose metadata is on the affected shard
+            will fail.  If the shard is read-only, then new writes to
+            directories on this shard will fail, but read operations and job
+            tasks using objects on this shard will be unaffected.  If the shard
+            is online for reads and writes, then only its fault tolerance is
+            currently affected.
+        action: >-
+            Determine the scope of the problem and resolve the underying issue.
+            See the "manatee-adm" command inside the PostgreSQL zones for
+            details.
 
 -
-    event: upset.manta.postgres.manatee-state-transition
+    # XXX See above
+    event: upset.manta.postgres.shard_transition
     legacyName: manatee-state-transition
     scope: 
         service: postgres
@@ -182,10 +197,24 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: manatee-state-transition
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Metadata shard has experienced a takeover event
+        description: >-
+            A metadata shard has gone through a takeover transition.  This may
+            be because the current synchronous peer took over for a primary that
+            it believed had failed, or the current primary peer selected a new
+            synchronous peer to replace one that had failed.  See "manatee-adm
+            history" on this shard for details.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            During the transition, some end user requests may have failed.  Some
+            job tasks may have experienced higher dispatch latency or (in rarer
+            cases) failures.  The transition has completed, and there should be
+            no ongoing impact.
 
+            If the primary peer has been deposed, then fault tolerance may be
+            compromised until that peer has been rebuilt.
+        action: >-
+            There is likely no immediate action required, but it is recommended
+            to verify the health of this shard using "manatee-adm".  You may
+            need to rebuild a deposed peer.
