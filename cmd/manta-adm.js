@@ -865,38 +865,6 @@ MantaAdmAlarm.prototype.do_details.help = [
 
 MantaAdmAlarm.prototype.do_details.options = [];
 
-MantaAdmAlarm.prototype.do_event = function (subcmd, opts, args, callback)
-{
-	var self = this;
-
-	if (args.length > 0) {
-		callback(new Error('unexpected arguments'));
-		return;
-	}
-
-	/* XXX does not need to init adm or alarms, really */
-	this.initAdmAndFetchAlarms(opts, function () {
-		var events = self.maa_parent.madm_adm.alarmEventNames();
-		events.forEach(function (eventName) {
-			console.log(eventName);
-		});
-		self.maa_parent.finiAdm();
-		callback();
-	});
-};
-
-MantaAdmAlarm.prototype.do_event.help = [
-    'List known event names (from metadata)',
-    '',
-    'Usage:',
-    '',
-    '    manta-adm alarm event',
-    '',
-    '{{options}}'
-].join('\n');
-
-MantaAdmAlarm.prototype.do_event.options = [];
-
 MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 {
 	var self = this;
@@ -947,53 +915,6 @@ MantaAdmAlarm.prototype.do_faults.help = [
 
 MantaAdmAlarm.prototype.do_faults.options = [];
 
-MantaAdmAlarm.prototype.do_ka = function (subcmd, opts, args, callback)
-{
-	var self = this;
-
-	this.initAdmAndFetchAlarms(opts, function () {
-		var events, nerrors;
-
-		if (args.length === 0) {
-			events = self.maa_parent.madm_adm.alarmEventNames();
-		} else {
-			events = args;
-		}
-
-		nerrors = 0;
-		events.forEach(function (eventName) {
-			var error;
-			error = self.maa_parent.madm_adm.alarmKaPrint({
-			    'eventName': eventName,
-			    'stream': process.stdout
-			});
-
-			if (error instanceof Error) {
-				console.error('warn: %s', error.message);
-			}
-
-			console.log('');
-		});
-
-		if (nerrors > 0) {
-			process.exit(1);
-		}
-		self.maa_parent.finiAdm();
-	});
-};
-
-MantaAdmAlarm.prototype.do_ka.help = [
-    'Print information about a possible fault',
-    '',
-    'Usage:',
-    '',
-    '    manta-adm alarm ka EVENT_NAME',
-    '',
-    '{{options}}'
-].join('\n');
-
-MantaAdmAlarm.prototype.do_ka.options = [];
-
 MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 {
 	var self = this;
@@ -1039,6 +960,8 @@ MantaAdmAlarm.prototype.do_list.options = [ {
     'type': 'arrayOfString',
     'help': 'Select columns for output (see below)'
 } ];
+
+MantaAdmAlarm.prototype.do_metadata = MantaAdmAlarmMetadata;
 
 MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 {
@@ -1364,6 +1287,97 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 		callback(err);
 	});
 };
+
+function MantaAdmAlarmMetadata(parent)
+{
+	this.maam_parent = parent;
+	this.maam_root = parent.maa_parent;
+
+	cmdln.Cmdln.call(this, {
+	    'name': 'metadata',
+	    'desc': 'View local metadata about alarm config'
+	});
+}
+
+util.inherits(MantaAdmAlarmMetadata, cmdln.Cmdln);
+
+MantaAdmAlarmMetadata.prototype.do_events =
+    function cmdEvents(subcmd, opts, args, callback)
+{
+	var self = this;
+
+	if (args.length > 0) {
+		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	/* XXX does not need to init adm or alarms, really */
+	this.maam_parent.initAdmAndFetchAlarms(opts, function () {
+		var events = self.maam_root.madm_adm.alarmEventNames();
+		events.forEach(function (eventName) {
+			console.log(eventName);
+		});
+		self.maam_root.finiAdm();
+		callback();
+	});
+};
+
+MantaAdmAlarmMetadata.prototype.do_events.help = [
+    'List known event names',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm events'
+].join('\n');
+
+MantaAdmAlarmMetadata.prototype.do_events.options = [];
+
+MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
+{
+	var self = this;
+
+	this.maam_parent.initAdmAndFetchAlarms(opts, function () {
+		var events, nerrors;
+		var root = self.maam_root;
+
+		if (args.length === 0) {
+			events = root.madm_adm.alarmEventNames();
+		} else {
+			events = args;
+		}
+
+		nerrors = 0;
+		events.forEach(function (eventName) {
+			var error;
+			error = root.madm_adm.alarmKaPrint({
+			    'eventName': eventName,
+			    'stream': process.stdout
+			});
+
+			if (error instanceof Error) {
+				console.error('warn: %s', error.message);
+			}
+
+			console.log('');
+		});
+
+		if (nerrors > 0) {
+			process.exit(1);
+		}
+		root.finiAdm();
+		callback();
+	});
+};
+
+MantaAdmAlarmMetadata.prototype.do_ka.help = [
+    'Print information about an event',
+    '',
+    'Usage:',
+    '',
+    '    manta-adm alarm ka EVENT_NAME'
+].join('\n');
+
+MantaAdmAlarmMetadata.prototype.do_ka.options = [];
 
 
 function MantaAdmAlarmProbeGroup(parent)
