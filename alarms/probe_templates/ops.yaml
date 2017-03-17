@@ -13,7 +13,7 @@
 #
 
 -
-    event: upset.manta.ops.mackerel-logscan
+    event: upset.manta.ops.log_error
     legacyName: mackerel-logscan
     scope: 
         service: ops
@@ -27,16 +27,19 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mackerel-logscan
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mackerel" logged an error'
+        description: The "mackerel" subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            One or more metering reports may be missing or incomplete.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-pg-transform-logscan-error
-    legacyName: mola-pg-transform-logscan-error
+    event: upset.manta.ops.backup_unpack.log_error
+    legacyName: mola-pg-transform-logscan-error,mola-pg-transform-logscan-fatal
     scope: 
         service: ops
     checks: 
@@ -48,20 +51,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: mola-pg-transform-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.ops.mola-pg-transform-logscan-fatal
-    legacyName: mola-pg-transform-logscan-fatal
-    scope: 
-        service: ops
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -71,16 +60,23 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mola-pg-transform-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mola-pg-transform" logged an error'
+        description: The "mola-pg-transform" subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The daily metadata backups may not have been unpacked.  As a result,
+            regularly scheduled garbage collection, audit, and metering jobs may
+            not be running or their results may be incomplete.   Disk usage may
+            accumulate on metadata and storage nodes until the problem is
+            resolved.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-logscan-error
-    legacyName: mola-logscan-error
+    event: upset.manta.ops.gc.log_error
+    legacyName: mola-logscan-error,mola-logscan-fatal
     scope: 
         service: ops
     checks: 
@@ -92,20 +88,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: mola-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.ops.mola-logscan-fatal
-    legacyName: mola-logscan-fatal
-    scope: 
-        service: ops
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -115,16 +97,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mola-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mola" logged an error'
+        description: The garbage collection subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on metadata and storage nodes until the problem is
+            repaired.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-gc-create-links-logscan-error
-    legacyName: mola-gc-create-links-logscan-error
+    event: upset.manta.ops.gc.create_links_log_error
+    legacyName: mola-gc-create-links-logscan-error,mola-gc-create-links-logscan-fatal
     scope: 
         service: ops
     checks: 
@@ -136,20 +123,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: mola-gc-create-links-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.ops.mola-gc-create-links-logscan-fatal
-    legacyName: mola-gc-create-links-logscan-fatal
-    scope: 
-        service: ops
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -159,16 +132,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mola-gc-create-links-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mola-gc-create-links" logged an error'
+        description: The "mola-gc-create-links" subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on metadata and storage  nodes until the problem is
+            repaired.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-moray-gc-logscan-error
-    legacyName: mola-moray-gc-logscan-error
+    event: upset.manta.ops.gc.moray_gc_log_error
+    legacyName: mola-moray-gc-logscan-error,mola-moray-gc-logscan-fatal
     scope: 
         service: ops
     checks: 
@@ -180,20 +158,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: mola-moray-gc-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.ops.mola-moray-gc-logscan-fatal
-    legacyName: mola-moray-gc-logscan-fatal
-    scope: 
-        service: ops
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -203,15 +167,19 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mola-moray-gc-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mola-moray-gc" logged an error'
+        description: The "mola-moray-gc" subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on metadata nodes until the problem is repaired.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-audit-logscan-error
+    event: upset.manta.ops.audit.log_error
     legacyName: mola-audit-logscan-error
     scope: 
         service: ops
@@ -224,20 +192,6 @@
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
-        title: mola-audit-logscan-error
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
--
-    event: upset.manta.ops.mola-audit-logscan-fatal
-    legacyName: mola-audit-logscan-fatal
-    scope: 
-        service: ops
-    checks: 
         - 
             type: bunyan-log-scan
             config: 
@@ -247,15 +201,21 @@
                 threshold: 1
                 period: 60
     ka: 
-        title: mola-audit-logscan-fatal
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: '"mola-audit" logged an error'
+        description: The audit subsystem has logged an error.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The regularly scheduled audit job may not have been able to run.  If
+            the job did run and complete successfully, then it may have
+            identified objects with missing copies, which would indicate a data
+            integrity issue.
+        action: >-
+            Determine the scope of the problem based on the log message and
+            resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-create-link-files-piling-up
+    event: upset.manta.ops.gc.objects_lingering
     legacyName: mola-create-link-files-piling-up
     scope: 
         service: ops
@@ -269,15 +229,19 @@
                 threshold: 6
                 timeout: 20
     ka: 
-        title: mola-create-link-files-piling-up
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Garbage collection instructions piling up
+        description: Garbage collection instruction objects are piling up
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on metadata and storage nodes until the problem is
+            repaired.
+        action: >-
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-moray-files-piling-up
+    event: upset.manta.ops.gc.moray_objects_lingering
     legacyName: mola-moray-files-piling-up
     scope: 
         service: ops
@@ -294,15 +258,18 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mola-moray-files-piling-up
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Garbage collection Moray instructions piling up
+        description: Garbage collection Moray instruction objects are piling up
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on metadata nodes until the problem is repaired.
+        action: >-
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-mako-files-piling-up
+    event: upset.manta.ops.gc.mako_objects_lingering
     legacyName: mola-mako-files-piling-up
     scope: 
         service: ops
@@ -319,15 +286,18 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mola-mako-files-piling-up
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Garbage collection Mako instructions piling up
+        description: Garbage collection Mako instruction objects are piling up
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            Garbage collection may not be running.  Disk space used may
+            accumulate on storage nodes until the problem is repaired.
+        action: >-
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mola-job-running-too-long
+    event: upset.manta.ops.gc.job_lingering
     legacyName: mola-job-running-too-long
     scope: 
         service: ops
@@ -343,15 +313,20 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mola-job-running-too-long
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Garbage collection job running too long
+        description: >-
+            The regularly-scheduled garbage collection job has been running for
+            longer than expected.
+        severity: major
+        response: No automated response will be taken.
+        impact: 
+            Garbage collection may not be completing.  Disk space used may
+            accumulate on storage nodes until the problem is repaired.
+        action: >-
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.manatee-backups-failed
+    event: upset.manta.ops.dumps_missing
     legacyName: manatee-backups-failed
     scope: 
         service: ops
@@ -368,15 +343,23 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: manatee-backups-failed
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Unpacked metadata dumps are missing
+        description: Regularly-scheduled metadata dumps have not been unpacked
+        severity: major
+        response: No automated response will be taken.
+        impact: >-
+            The regularly scheduled metadata backups may not have been unpacked.
+            As a result, regularly scheduled garbage collection, audit, and
+            metering jobs may not be running or their results may be incomplete.
+            Disk usage may accumulate on metadata and storage nodes until the
+            problem is resolved.
+        action: >-
+            The "manta-hk" tool can be used in the "ops" zone to determine
+            whether the regularly-scheduled dumps have been uploaded and
+            unpacked.
 
 -
-    event: upset.manta.ops.mackerel-summary-missing
+    event: upset.manta.ops.metering.summary_missing
     legacyName: mackerel-summary-missing
     scope: 
         service: ops
@@ -393,15 +376,19 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mackerel-summary-missing
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Recent metering summary report missing
+        description: The most recent metering summary report could not be found.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The metering subsystem may not be functioning.  Per-user access logs
+            and summary reports may be missing or incomplete.  In some
+            deployments, this can affect customer billing.
+        action:
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mackerel-storage-missing
+    event: upset.manta.ops.metering.storage_missing
     legacyName: mackerel-storage-missing
     scope: 
         service: ops
@@ -418,15 +405,18 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mackerel-storage-missing
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Recent metering storage report missing
+        description: The most recent metering storage report could not be found.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The metering subsystem may not be functioning.  In some deployments,
+            this can affect customer billing.
+        action:
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mackerel-request-missing
+    event: upset.manta.ops.metering.request_missing
     legacyName: mackerel-request-missing
     scope: 
         service: ops
@@ -443,15 +433,19 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mackerel-request-missing
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Recent metering request report missing
+        description: The most recent metering request report could not be found.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The metering subsystem may not be functioning.  Per-user access logs
+            and summary reports may be missing or incomplete.  In some
+            deployments, this can affect customer billing.
+        action:
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.mackerel-compute-missing
+    event: upset.manta.ops.metering.compute_missing
     legacyName: mackerel-compute-missing
     scope: 
         service: ops
@@ -468,15 +462,19 @@
                     pattern: fail
                     type: substring
     ka: 
-        title: mackerel-compute-missing
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
+        title: Recent metering compute report missing
+        description: The most recent metering compute report could not be found.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The metering subsystem may not be functioning.  Per-user access logs
+            and summary reports may be missing or incomplete.  In some
+            deployments, this can affect customer billing.
+        action:
+            Determine the scope of the problem and resolve the underlying issue.
 
 -
-    event: upset.manta.ops.wrasse-behind
+    event: upset.manta.ops.jobpuller.falling_behind
     legacyName: wrasse-behind
     scope: 
         service: ops
@@ -489,10 +487,14 @@
                 interval: 3600
                 threshold: 1
     ka: 
-        title: wrasse-behind
-        description: XXX-UNKNOWN
-        severity: XXX-UNKNOWN
-        response: XXX-UNKNOWN
-        impact: XXX-UNKNOWN
-        action: XXX-UNKNOWN
-
+        title: Job archiver is falling behind
+        description: There are too many jobs that have not been archived.
+        severity: minor
+        response: No automated response will be taken.
+        impact: >-
+            The jobs database may be getting large, full of job data that is no
+            longer needed.  Over time, this can significantly decrease
+            performance of compute jobs.
+        action: >-
+            Check the logs for the job archiver to help debug the underlying
+            issue and then repair it.  See also known issue "MANTA-2277".
