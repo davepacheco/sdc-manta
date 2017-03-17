@@ -1414,7 +1414,7 @@ MantaAdmAlarmProbeGroup.prototype.do_list.options = [
  *
  * Returns either an Error describing invalid command-line arguments or an
  * object with "columns" and "omitHeader" set according to the options.
- * XXX abstract other uses of checkColumns to use this
+ * XXX-syncup abstract other uses of checkColumns to use this
  */
 function listPrepareArgs(opts, allowed)
 {
