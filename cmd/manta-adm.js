@@ -781,17 +781,17 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 		adm.alarmsClose({
 		    'alarmIds': args,
 		    'concurrency': opts.concurrency
-		}, function (err, errors) {
-		    errors.forEach(function (e) {
-			console.error('error: %s', e.message);
-		    });
+		}, function (err) {
+			if (err) {
+				common.errorForEach(err, function (e) {
+					console.error('error: %s', e.message);
+				});
 
-		    if (errors.length > 0) {
-			process.exit(1);
-		    }
+				process.exit(1);
+			}
 
-		    parent.finiAdm();
-		    callback();
+			parent.finiAdm();
+			callback();
 		});
 	});
 };
@@ -997,15 +997,12 @@ MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 		    'alarmIds': args.slice(1),
 		    'concurrency': opts.concurrency,
 		    'suppressed': !allowedArg0[args[0]]
-		}, function (err, errors) {
-			/*
-			 * XXX commonize and use MultiError functions?
-			 */
-			errors.forEach(function (e) {
-				console.error('error: %s', e.message);
-			});
+		}, function (err) {
+			if (err) {
+				common.errorForEach(err, function (e) {
+					console.error('error: %s', e.message);
+				});
 
-			if (errors.length > 0) {
 				process.exit(1);
 			}
 

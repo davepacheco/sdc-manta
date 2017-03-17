@@ -51,13 +51,10 @@ function validateOneFile(filename, callback)
 		errors = pts.errors();
 		nerrors += errors.length;
 
-		/* XXX commonize */
-		if (errors.length == 1) {
-			cmdutil.warn(errors[0]);
-		} else if (errors.length > 1) {
-			cmdutil.warn(new VError.MultiError(errors));
-		} else {
+		if (errors.length === 0) {
 			console.error('%s okay', filename);
+		} else {
+			errors.forEach(function (e) { cmdutil.warn(e); });
 		}
 
 		callback();
