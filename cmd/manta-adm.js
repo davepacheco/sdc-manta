@@ -51,6 +51,51 @@ var madm = require('../lib/adm');
 var maArg0 = path.basename(process.argv[1]);
 
 /*
+ * These node-cmdln options are used by multiple subcommands.  They're defined
+ * in one place to ensure consistency in names, aliases, and help message.
+ */
+var maCommonOptions = {
+    'columns': {
+	'names': [ 'columns', 'o' ],
+	'type': 'arrayOfString',
+	'help': 'Select columns for output (see below)'
+    },
+    'concurrency': {
+	'names': [ 'concurrency' ],
+	'type': 'positiveInteger',
+	'help': 'Number of concurrent requests to make',
+	'default': 10
+    },
+    'confirm': {
+	'names': [ 'confirm', 'y' ],
+	'type': 'bool',
+	'help': 'Bypass all confirmations (be careful!)'
+    },
+    'dryrun': {
+	'names': [ 'dryrun', 'n' ],
+	'type': 'bool',
+	'help': 'Print what would be done without actually doing it.'
+    },
+    'logFile': {
+	'names': [ 'log_file', 'l' ],
+	'type': 'string',
+	'help': 'Dump logs to this file (or "stdout")',
+	'default': '/var/log/manta-adm.log'
+    },
+    'omitHeader': {
+	'names': [ 'omit-header', 'H'],
+	'type': 'bool',
+	'help': 'Omit the header row for columnar output'
+    },
+    'unconfigure': {
+	'names': [ 'unconfigure' ],
+	'type': 'bool',
+	'help': 'Remove all probes and probe groups instead of updating them',
+	'default': false
+    }
+};
+
+/*
  * node-cmdln interface for the manta-adm tool.
  */
 function MantaAdm()
@@ -171,27 +216,21 @@ MantaAdm.prototype.do_cn.help =
     '{{options}}\n' +
     'Available columns for -o:\n    ' + madm.cnColumnNames().join(', ');
 
-MantaAdm.prototype.do_cn.options = [ {
-    'names': [ 'omit-header', 'H'],
-    'type': 'bool',
-    'help': 'Omit the header row for columnar output'
-}, {
-    'names': [ 'log_file', 'l' ],
-    'type': 'string',
-    'help': 'Dump logs to this file (or "stdout")'
-}, {
-    'names': [ 'oneachnode', 'n' ],
-    'type': 'bool',
-    'help': 'Emit output suitable for "sdc-oneachnode -n"'
-}, {
-    'names': [ 'columns', 'o' ],
-    'type': 'arrayOfString',
-    'help': 'Select columns for output (see below)'
-}, {
-    'names': [ 'storage-only', 's' ],
-    'type': 'bool',
-    'help': 'Show only nodes used as storage nodes.'
-}];
+MantaAdm.prototype.do_cn.options = [
+    maCommonOptions.omitHeader,
+    maCommonOptions.logFile,
+    {
+	'names': [ 'oneachnode', 'n' ],
+	'type': 'bool',
+	'help': 'Emit output suitable for "sdc-oneachnode -n"'
+    },
+    maCommonOptions.columns,
+    {
+	'names': [ 'storage-only', 's' ],
+	'type': 'bool',
+	'help': 'Show only nodes used as storage nodes.'
+    }
+];
 
 MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 {
@@ -367,23 +406,16 @@ MantaAdm.prototype.do_show.options = [ {
     'names': [ 'bycn', 'c' ],
     'type': 'bool',
     'help': 'Show results by compute node, rather than by service.'
-}, {
-    'names': [ 'omit-header', 'H'],
-    'type': 'bool',
-    'help': 'Omit the header row for columnar output'
-}, {
+},
+    maCommonOptions.omitHeader,
+{
     'names': [ 'json', 'j' ],
     'type': 'bool',
     'help': 'Show results in JSON form suitable for importing with "update".'
-}, {
-    'names': [ 'log_file', 'l' ],
-    'type': 'string',
-    'help': 'dump logs to this file (or "stdout")'
-}, {
-    'names': [ 'columns', 'o' ],
-    'type': 'arrayOfString',
-    'help': 'Select columns for output (see below)'
-}, {
+},
+    maCommonOptions.logFile,
+    maCommonOptions.columns,
+ {
     'names': [ 'summary', 's' ],
     'type': 'bool',
     'help': 'Show summary of deployed zones rather than each zone separately.'
@@ -484,20 +516,11 @@ MantaAdm.prototype.do_update = function (subcmd, opts, args, callback)
 MantaAdm.prototype.do_update.help =
     'Update deployment to match a JSON configuration.\n\n{{options}}';
 
-MantaAdm.prototype.do_update.options = [ {
-    'names': [ 'log_file', 'l' ],
-    'type': 'string',
-    'help': 'dump logs to this file (or "stdout")',
-    'default': '/var/log/manta-adm.log'
-}, {
-    'names': [ 'dryrun', 'n' ],
-    'type': 'bool',
-    'help': 'Print what would be done without actually doing it.'
-}, {
-    'names': [ 'confirm', 'y' ],
-    'type': 'bool',
-    'help': 'Bypass all confirmations (be careful!)'
-}, {
+MantaAdm.prototype.do_update.options = [
+    maCommonOptions.logFile,
+    maCommonOptions.dryrun,
+    maCommonOptions.confirm,
+{
     'names': [ 'no-reprovision' ],
     'type': 'bool',
     'help': 'When upgrading a zone, always provision and deprovision ' +
@@ -582,20 +605,11 @@ MantaAdmZk.prototype.do_list.help =
  * as general debug logs.  But the "zk list" subcommand is read-only and only
  * applicable to this user, so we use a path in /var/tmp for the log.
  */
-MantaAdmZk.prototype.do_list.options = [ {
-    'names': [ 'omit-header', 'H'],
-    'type': 'bool',
-    'help': 'Omit the header row for columnar output'
-}, {
-    'names': [ 'log_file', 'l' ],
-    'type': 'string',
-    'help': 'dump logs to this file (or "stdout")',
-    'default': '/var/tmp/manta-adm.log'
-}, {
-    'names': [ 'columns', 'o' ],
-    'type': 'arrayOfString',
-    'help': 'Select columns for output (see below)'
-} ];
+MantaAdmZk.prototype.do_list.options = [
+    maCommonOptions.omitHeader,
+    maCommonOptions.logFile,
+    maCommonOptions.columns
+];
 
 MantaAdmZk.prototype.do_fixup = function (subcmd, opts, args, callback)
 {
@@ -717,19 +731,11 @@ MantaAdmZk.prototype.do_fixup.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmZk.prototype.do_fixup.options = [ {
-    'names': [ 'confirm', 'y' ],
-    'type': 'bool',
-    'help': 'Bypass all confirmations (be careful!)'
-}, {
-    'names': [ 'dryrun', 'n' ],
-    'type': 'bool',
-    'help': 'Print what would be done without actually doing it.'
-}, {
-    'names': [ 'log_file', 'l' ],
-    'type': 'string',
-    'help': 'Dump logs to this file (or "stdout")'
-} ];
+MantaAdmZk.prototype.do_fixup.options = [
+    maCommonOptions.confirm,
+    maCommonOptions.dryrun,
+    maCommonOptions.logFile
+];
 
 function MantaAdmAlarm(parent)
 {
@@ -806,12 +812,9 @@ MantaAdmAlarm.prototype.do_close.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_close.options = [ {
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrent requests to make',
-    'default': 10
-} ];
+MantaAdmAlarm.prototype.do_close.options = [
+    maCommonOptions.concurrency
+];
 
 MantaAdmAlarm.prototype.do_config = MantaAdmAlarmConfig;
 
@@ -951,15 +954,10 @@ MantaAdmAlarm.prototype.do_list.help = [
     'Available columns for -o:\n    ' + madm.alarmColumnNames().join(', ')
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_list.options = [ {
-    'names': [ 'omit-header', 'H'],
-    'type': 'bool',
-    'help': 'Omit the header row for columnar output'
-}, {
-    'names': [ 'columns', 'o' ],
-    'type': 'arrayOfString',
-    'help': 'Select columns for output (see below)'
-} ];
+MantaAdmAlarm.prototype.do_list.options = [
+    maCommonOptions.omitHeader,
+    maCommonOptions.columns
+];
 
 MantaAdmAlarm.prototype.do_metadata = MantaAdmAlarmMetadata;
 
@@ -1022,13 +1020,9 @@ MantaAdmAlarm.prototype.do_notify.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_notify.options = [ {
-    /* XXX commonize */
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrent requests to make',
-    'default': 10
-} ];
+MantaAdmAlarm.prototype.do_notify.options = [
+    maCommonOptions.concurrency
+];
 
 MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
 {
@@ -1117,12 +1111,9 @@ MantaAdmAlarmConfig.prototype.do_show.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarmConfig.prototype.do_show.options = [ {
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrency requests to make',
-    'default': 10
-} ];
+MantaAdmAlarmConfig.prototype.do_show.options = [
+    maCommonOptions.concurrency
+];
 
 MantaAdmAlarmConfig.prototype.do_update =
     function (subcmd, opts, args, callback)
@@ -1146,25 +1137,12 @@ MantaAdmAlarmConfig.prototype.do_update.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarmConfig.prototype.do_update.options = [ {
-    'names': [ 'confirm', 'y' ],
-    'type': 'bool',
-    'help': 'Bypass all confirmations (be careful!)'
-}, {
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrency requests to make',
-    'default': 10
-}, {
-    'names': [ 'dryrun', 'n' ],
-    'type': 'bool',
-    'help': 'Print what would be done without actually doing it.'
-}, {
-    'names': [ 'unconfigure' ],
-    'type': 'bool',
-    'help': 'Remove all probes and probe groups instead of updating them',
-    'default': false
-} ];
+MantaAdmAlarmConfig.prototype.do_update.options = [
+    maCommonOptions.confirm,
+    maCommonOptions.concurrency,
+    maCommonOptions.dryrun,
+    maCommonOptions.unconfigure
+];
 
 MantaAdmAlarmConfig.prototype.do_verify =
     function (subcmd, opts, args, callback)
@@ -1187,17 +1165,10 @@ MantaAdmAlarmConfig.prototype.do_verify.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarmConfig.prototype.do_verify.options = [ {
-    'names': [ 'concurrency' ],
-    'type': 'positiveInteger',
-    'help': 'Number of concurrent requests to make',
-    'default': 10
-}, {
-    'names': [ 'unconfigure' ],
-    'type': 'bool',
-    'help': 'Remove all probes and probe groups instead of updating them',
-    'default': false
-} ];
+MantaAdmAlarmConfig.prototype.do_verify.options = [
+    maCommonOptions.concurrency,
+    maCommonOptions.unconfigure
+];
 
 MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
     function (clioptions, dryrun, callback) {
@@ -1428,15 +1399,10 @@ MantaAdmAlarmProbeGroup.prototype.do_list.help = [
     '    ' + madm.probeGroupColumnNames().join(', ')
 ].join('\n');
 
-MantaAdmAlarmProbeGroup.prototype.do_list.options = [ {
-    'names': [ 'omit-header', 'H'],
-    'type': 'bool',
-    'help': 'Omit the header row for columnar output'
-}, {
-    'names': [ 'columns', 'o' ],
-    'type': 'arrayOfString',
-    'help': 'Select columns for output (see below)'
-} ];
+MantaAdmAlarmProbeGroup.prototype.do_list.options = [
+    maCommonOptions.omitHeader,
+    maCommonOptions.columns
+];
 
 
 /*
