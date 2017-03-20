@@ -156,6 +156,30 @@ status of the program to determine success or failure.
 
 ### "alarm" subcommand
 
+`manta-adm alarm close ALARM_ID...`
+
+`manta-adm alarm config probegroups list [-H] [-o FIELD...]`
+
+`manta-adm alarm config show`
+
+`manta-adm alarm config update [-n] [-y] [--unconfigure]`
+
+`manta-adm alarm config verify [--unconfigure]`
+
+`manta-adm alarm details ALARM_ID...`
+
+`manta-adm alarm faults ALARM_ID...`
+
+`manta-adm alarm list [-H] [-o FIELD...]`
+
+`manta-adm alarm metadata events`
+
+`manta-adm alarm metadata ka [EVENT_NAME...]`
+
+`manta-adm alarm notify on|off ALARM_ID...`
+
+`manta-adm alarm show`
+
 The `manta-adm alarm` subcommand provides several tools that allow operators to:
 
 * view and configure amon probes and probe groups (`config` subcommand)
