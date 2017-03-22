@@ -1210,7 +1210,7 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 			});
 
 			if (!plan.needsChanges()) {
-				console.log('nothing to do');
+				console.log('no changes to make');
 				stepcb();
 				return;
 			}
@@ -1246,7 +1246,8 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 
 			adm.amonUpdatePlanApply({
 			    'concurrency': clioptions.concurrency,
-			    'plan': plan
+			    'plan': plan,
+			    'stream': process.stderr
 			}, stepcb);
 		}
 	    ]
