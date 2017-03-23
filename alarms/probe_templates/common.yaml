@@ -51,6 +51,7 @@
             additional capacity using new servers.
 
 -
+    # XXX-syncup change interval back to 3600
     event: upset.manta.zone.filesystem_almost_full
     legacyName: "free space on / below 20%"
     scope: 
@@ -61,7 +62,7 @@
             config: 
                 path: "/"
                 threshold: "20%"
-                interval: 3600
+                interval: 900
     ka: 
         title: Filesystem almost full
         description: A zone filesystem is running low on free space

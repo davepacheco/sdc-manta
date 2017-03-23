@@ -41,6 +41,7 @@ var cmdln = require('cmdln');
 var cmdutil = require('cmdutil');
 var jsprim = require('jsprim');
 var path = require('path');
+var restifyClients = require('restify-clients');
 var util = require('util');
 var vasync = require('vasync');
 var VError = require('verror').VError;
@@ -133,7 +134,7 @@ MantaAdm.prototype.initAdm = function (opts, callback)
 	this.madm_log = new bunyan({
 	    'name': maArg0,
 	    'streams': logstreams,
-	    'serializers': bunyan.stdSerializers
+	    'serializers': restifyClients.bunyan.serializers
 	});
 
 	this.madm_adm = new madm.MantaAdm(this.madm_log);
