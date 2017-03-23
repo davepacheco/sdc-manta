@@ -911,7 +911,7 @@ MantaAdmAlarm.prototype.do_faults.help = [
     '',
     'Usage:',
     '',
-    '    manta-adm alarm fault ALARMID...',
+    '    manta-adm alarm faults ALARMID...',
     '',
     '{{options}}'
 ].join('\n');

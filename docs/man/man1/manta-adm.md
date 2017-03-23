@@ -276,13 +276,13 @@ response, and suggested actions for this issue.
 
 `manta-adm alarm faults ALARM_ID...`
 
-Prints detailed information about the events (faults) associated with any number
-of alarms.  The specific information provided depends on the alarm.  If the
-alarm related to a failed health check command, then the exit status,
-terminating signal, stdout, and stderr of the command are provided.  If the
-alarm relates to an error log entry, the contents of the log entry are provided.
-There can be many faults associated with a single alarm, though not all of them
-are reported by this command.
+Prints detailed information about the faults associated with any number of
+alarms.  Each fault represents a particular probe failure.  The specific
+information provided depends on the alarm.  If the alarm related to a failed
+health check command, then the exit status, terminating signal, stdout, and
+stderr of the command are provided.  If the alarm relates to an error log entry,
+the contents of the log entry are provided.  There can be many faults associated
+with a single alarm.
 
 `manta-adm alarm list [-H] [-o FIELD...]`
 
