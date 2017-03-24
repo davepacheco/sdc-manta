@@ -51,6 +51,8 @@ var madm = require('../lib/adm');
 
 var maArg0 = path.basename(process.argv[1]);
 
+var maDefaultAlarmConcurrency = 10;
+
 /*
  * These node-cmdln options are used by multiple subcommands.  They're defined
  * in one place to ensure consistency in names, aliases, and help message.
@@ -65,7 +67,7 @@ var maCommonOptions = {
 	'names': [ 'concurrency' ],
 	'type': 'positiveInteger',
 	'help': 'Number of concurrent requests to make',
-	'default': 10
+	'default': maDefaultAlarmConcurrency
     },
     'confirm': {
 	'names': [ 'confirm', 'y' ],
@@ -749,32 +751,54 @@ function MantaAdmAlarm(parent)
 
 util.inherits(MantaAdmAlarm, cmdln.Cmdln);
 
-MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
+MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (args, callback)
 {
 	var self = this;
+	var clioptions, skipWarnings, initArgs, funcs;
+
+	assertplus.object(args, 'args');
+	assertplus.object(args.sources, 'args.sources');
+	assertplus.object(args.clioptions, 'clioptions');
+	assertplus.optionalBool(args.skipWarnings, 'args.skipWarnings');
+	assertplus.optionalBool(args.skipFetch, 'args.skipFetch');
+
+	skipWarnings = args.skipWarnings;
+	clioptions = args.clioptions;
+	initArgs = {
+	    'concurrency': clioptions.concurrency || maDefaultAlarmConcurrency,
+	    'sources': args.sources
+	};
+
+	funcs = [];
+	funcs.push(function initAdm(_, stepcb) {
+		self.maa_parent.initAdm(clioptions, stepcb);
+	});
+
+	if (!args.skipFetch) {
+		funcs.push(function fetch(_, stepcb) {
+			self.maa_parent.madm_adm.fetchDeployed(stepcb);
+		});
+	}
+
+	funcs.push(function fetchAmon(_, stepcb) {
+		self.maa_parent.madm_adm.alarmsInit(initArgs, stepcb);
+	});
 
 	vasync.pipeline({
-	    'arg': this,
-	    'funcs': [
-		function initAdm(_, stepcb) {
-			self.maa_parent.initAdm(opts, stepcb);
-		},
-		function fetch(_, stepcb) {
-			self.maa_parent.madm_adm.fetchDeployed(stepcb);
-		},
-		function fetchAmon(_, stepcb) {
-			self.maa_parent.madm_adm.alarmsInit(stepcb);
-		}
-	    ]
+	    'funcs': funcs
 	}, function (err) {
+		var errors;
+
 		if (err) {
 			fatal(err.message);
 		}
 
-		err = self.maa_parent.madm_adm.alarmWarning();
-		common.errorForEach(err, function (e) {
-			cmdutil.warn(e);
-		});
+		if (!skipWarnings) {
+			errors = self.maa_parent.madm_adm.alarmWarnings();
+			errors.forEach(function (e) {
+				cmdutil.warn(e);
+			});
+		}
 
 		callback();
 	});
@@ -790,7 +814,11 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 	}
 
 	parent = this.maa_parent;
-	this.initAdmAndFetchAlarms(opts, function () {
+	this.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': {},
+	    'skipFetch': true
+	}, function () {
 		var adm = parent.madm_adm;
 		adm.alarmsClose({
 		    'alarmIds': args,
@@ -828,40 +856,7 @@ MantaAdmAlarm.prototype.do_config = MantaAdmAlarmConfig;
 
 MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
 {
-	var self = this;
-
-	if (args.length < 1) {
-		callback(new Error('expected ALARMID'));
-		return;
-	}
-
-	/*
-	 * XXX We should be able to fetch details about closed alarms.  This
-	 * currently only looks up information in the *open* alarms that we've
-	 * already fetched.
-	 */
-	this.initAdmAndFetchAlarms(opts, function () {
-		var nerrors = 0;
-		args.forEach(function (id) {
-			var error;
-			error = self.maa_parent.madm_adm.alarmPrint({
-			    'id': id,
-			    'stream': process.stdout,
-			    'nmaxfaults': 1
-			});
-
-			if (error instanceof Error) {
-				cmdutil.warn(error);
-			}
-
-			console.log('');
-		});
-
-		if (nerrors > 0) {
-			process.exit(1);
-		}
-		self.maa_parent.finiAdm();
-	});
+	this.doAlarmPrintSubcommand(opts, 1, args, callback);
 };
 
 MantaAdmAlarm.prototype.do_details.help = [
@@ -878,40 +873,7 @@ MantaAdmAlarm.prototype.do_details.options = [];
 
 MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 {
-	var self = this;
-
-	if (args.length < 1) {
-		callback(new Error('expected ALARMID'));
-		return;
-	}
-
-	/*
-	 * XXX We should be able to fetch details about closed alarms.  This
-	 * currently only looks up information in the *open* alarms that we've
-	 * already fetched.
-	 * XXX This also duplicates code from "details"
-	 */
-	this.initAdmAndFetchAlarms(opts, function () {
-		var nerrors = 0;
-		args.forEach(function (id) {
-			var error;
-			error = self.maa_parent.madm_adm.alarmPrint({
-			    'id': id,
-			    'stream': process.stdout
-			});
-
-			if (error instanceof Error) {
-				cmdutil.warn(error);
-			}
-
-			console.log('');
-		});
-
-		if (nerrors > 0) {
-			process.exit(1);
-		}
-		self.maa_parent.finiAdm();
-	});
+	this.doAlarmPrintSubcommand(opts, undefined, args, callback);
 };
 
 MantaAdmAlarm.prototype.do_faults.help = [
@@ -926,13 +888,74 @@ MantaAdmAlarm.prototype.do_faults.help = [
 
 MantaAdmAlarm.prototype.do_faults.options = [];
 
+MantaAdmAlarm.prototype.doAlarmPrintSubcommand = function
+    doAlarmPrintSubcommand(opts, nmaxfaults, args, callback)
+{
+	var self = this;
+	var sources = {};
+
+	if (args.length < 1) {
+		callback(new Error('expected ALARMID'));
+		return;
+	}
+
+	sources = {
+	    'configBasic': true,
+	    'alarms': {
+		'alarmIds': args
+	    }
+	};
+
+	this.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': sources,
+	    'skipWarnings': true
+	}, function () {
+		var nerrors = 0;
+		args.forEach(function (id) {
+			var error;
+
+			error = self.maa_parent.madm_adm.alarmPrint({
+			    'id': id,
+			    'stream': process.stdout,
+			    'nmaxfaults': nmaxfaults
+			});
+
+			if (error instanceof Error) {
+				cmdutil.warn(error);
+			}
+
+			console.log('');
+		});
+
+		if (nerrors > 0) {
+			process.exit(1);
+		}
+
+		self.maa_parent.finiAdm();
+	});
+};
+
 MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 {
 	var self = this;
 	var options = {};
+	var sources = {};
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
+		return;
+	}
+
+	switch (opts.state) {
+	case 'all':
+	case 'closed':
+	case 'open':
+	case 'recent':
+		break;
+
+	default:
+		callback(new VError('unsupported state: %s', opts.state));
 		return;
 	}
 
@@ -942,8 +965,18 @@ MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 		return;
 	}
 
+	sources = {
+	    'configBasic': true,
+	    'alarms': {
+		'state': opts.state
+	    }
+	};
+
 	options.stream = process.stdout;
-	this.initAdmAndFetchAlarms(opts, function () {
+	this.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': sources
+	}, function () {
 		self.maa_parent.madm_adm.alarmsList(options);
 		self.maa_parent.finiAdm();
 		callback();
@@ -964,7 +997,13 @@ MantaAdmAlarm.prototype.do_list.help = [
 
 MantaAdmAlarm.prototype.do_list.options = [
     maCommonOptions.omitHeader,
-    maCommonOptions.columns
+    maCommonOptions.columns,
+    {
+	'names': [ 'state' ],
+	'type': 'string',
+	'help': 'List only alarms in specified state',
+	'default': 'open'
+    }
 ];
 
 MantaAdmAlarm.prototype.do_metadata = MantaAdmAlarmMetadata;
@@ -997,7 +1036,11 @@ MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 	}
 
 	parent = this.maa_parent;
-	this.initAdmAndFetchAlarms(opts, function () {
+	this.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': {},
+	    'skipFetch': true
+	}, function () {
 		var adm = parent.madm_adm;
 		adm.alarmsUpdateNotification({
 		    'alarmIds': args.slice(1),
@@ -1034,7 +1077,7 @@ MantaAdmAlarm.prototype.do_notify.options = [
 
 MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
 {
-	var parent;
+	var parent, sources;
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
@@ -1042,7 +1085,17 @@ MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
 	}
 
 	parent = this.maa_parent;
-	this.initAdmAndFetchAlarms(opts, function () {
+	sources = {
+	    'configBasic': true,
+	    'alarms': {
+		'state': 'open'
+	    }
+	};
+
+	this.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': sources
+	}, function () {
 		var showArgs = { 'stream': process.stdout };
 		parent.madm_adm.alarmsShow(showArgs);
 		parent.finiAdm();
@@ -1080,7 +1133,7 @@ MantaAdmAlarmConfig.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
 
 MantaAdmAlarmConfig.prototype.do_show = function (subcmd, opts, args, callback)
 {
-	var root, parent, adm;
+	var root, parent, adm, sources;
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
@@ -1089,22 +1142,21 @@ MantaAdmAlarmConfig.prototype.do_show = function (subcmd, opts, args, callback)
 
 	root = this.maac_root;
 	parent = this.maac_parent;
-	parent.initAdmAndFetchAlarms(opts, function () {
+	sources = {
+	    'configFull': true
+	};
+
+	parent.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': sources
+	}, function () {
 		adm = root.madm_adm;
-		adm.alarmsInitProbes({
-		    'concurrency': opts.concurrency
-		}, function (err) {
-			if (err) {
-				fatal(err.message);
-			}
-
-			adm.alarmConfigShow({
-			    'stream': process.stdout
-			});
-
-			root.finiAdm();
-			callback();
+		adm.alarmConfigShow({
+		    'stream': process.stdout
 		});
+
+		root.finiAdm();
+		callback();
 	});
 
 };
@@ -1181,7 +1233,7 @@ MantaAdmAlarmConfig.prototype.do_verify.options = [
 MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
     function (clioptions, dryrun, callback) {
 	var self = this;
-	var root, parent, adm, plan;
+	var root, parent, sources, adm, plan;
 
 	assertplus.object(clioptions, 'clioptions');
 	assertplus.number(clioptions.concurrency, 'clioptions.concurrency');
@@ -1189,21 +1241,24 @@ MantaAdmAlarmConfig.prototype.amonUpdateSubcommand =
 
 	root = self.maac_root;
 	parent = self.maac_parent;
+	sources = {
+	    'configFull': true
+	};
 	vasync.pipeline({
 	    'arg': null,
 	    'funcs': [
 		function init(_, stepcb) {
-			parent.initAdmAndFetchAlarms(clioptions, stepcb);
-		},
-		function fetchProbes(_, stepcb) {
-			adm = root.madm_adm;
-			adm.alarmsInitProbes({
-			    'concurrency': clioptions.concurrency
+			parent.initAdmAndFetchAlarms({
+			    'clioptions': clioptions,
+			    'sources': sources
 			}, stepcb);
 		},
 		function generateAmonPlan(_, stepcb) {
-			var options = {
-				unconfigure: clioptions.unconfigure
+			var options;
+
+			adm = root.madm_adm;
+			options = {
+				'unconfigure': clioptions.unconfigure
 			};
 			plan = adm.amonUpdatePlanCreate(options);
 			if (plan instanceof Error) {
@@ -1288,8 +1343,11 @@ MantaAdmAlarmMetadata.prototype.do_events =
 		return;
 	}
 
-	/* XXX does not need to init adm or alarms, really */
-	this.maam_parent.initAdmAndFetchAlarms(opts, function () {
+	this.maam_parent.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': {},
+	    'skipFetch': true
+	}, function () {
 		var events = self.maam_root.madm_adm.alarmEventNames();
 		events.forEach(function (eventName) {
 			console.log(eventName);
@@ -1313,7 +1371,11 @@ MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
 {
 	var self = this;
 
-	this.maam_parent.initAdmAndFetchAlarms(opts, function () {
+	this.maam_parent.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': {},
+	    'skipFetch': true
+	}, function () {
 		var events, nerrors;
 		var root = self.maam_root;
 
@@ -1375,6 +1437,7 @@ MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
 {
 	var self = this;
 	var options = {};
+	var sources;
 
 	if (args.length > 0) {
 		callback(new Error('unexpected arguments'));
@@ -1387,8 +1450,22 @@ MantaAdmAlarmProbeGroup.prototype.do_list = function (subcmd,
 		return;
 	}
 
+	/*
+	 * We fetch the list of open alarms in order to count the alarms for
+	 * each probe group.
+	 */
+	sources = {
+	    'configFull': true,
+	    'alarms': {
+		'state': 'open'
+	    }
+	};
+
 	options.stream = process.stdout;
-	this.maap_parent.maac_parent.initAdmAndFetchAlarms(opts, function () {
+	this.maap_parent.maac_parent.initAdmAndFetchAlarms({
+	    'clioptions': opts,
+	    'sources': sources
+	}, function () {
 		self.maap_root.madm_adm.alarmsProbeGroupsList(options);
 		self.maap_root.finiAdm();
 		callback();
