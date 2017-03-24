@@ -816,8 +816,7 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 	parent = this.maa_parent;
 	this.initAdmAndFetchAlarms({
 	    'clioptions': opts,
-	    'sources': {},
-	    'skipFetch': true
+	    'sources': {}
 	}, function () {
 		var adm = parent.madm_adm;
 		adm.alarmsClose({
@@ -1038,8 +1037,7 @@ MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 	parent = this.maa_parent;
 	this.initAdmAndFetchAlarms({
 	    'clioptions': opts,
-	    'sources': {},
-	    'skipFetch': true
+	    'sources': {}
 	}, function () {
 		var adm = parent.madm_adm;
 		adm.alarmsUpdateNotification({
