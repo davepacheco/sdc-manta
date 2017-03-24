@@ -751,16 +751,18 @@ util.inherits(MantaAdmAlarm, cmdln.Cmdln);
 
 MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 {
+	var self = this;
+
 	vasync.pipeline({
 	    'arg': this,
 	    'funcs': [
-		function initAdm(self, stepcb) {
+		function initAdm(_, stepcb) {
 			self.maa_parent.initAdm(opts, stepcb);
 		},
-		function fetch(self, stepcb) {
+		function fetch(_, stepcb) {
 			self.maa_parent.madm_adm.fetchDeployed(stepcb);
 		},
-		function fetchAmon(self, stepcb) {
+		function fetchAmon(_, stepcb) {
 			self.maa_parent.madm_adm.alarmsInit(stepcb);
 		}
 	    ]
@@ -768,6 +770,11 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (opts, callback)
 		if (err) {
 			fatal(err.message);
 		}
+
+		err = self.maa_parent.madm_adm.alarmWarning();
+		common.errorForEach(err, function (e) {
+			cmdutil.warn(e);
+		});
 
 		callback();
 	});
@@ -844,7 +851,7 @@ MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
 			});
 
 			if (error instanceof Error) {
-				console.error('warn: %s', error.message);
+				cmdutil.warn(error);
 			}
 
 			console.log('');
@@ -894,7 +901,7 @@ MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 			});
 
 			if (error instanceof Error) {
-				console.error('warn: %s', error.message);
+				cmdutil.warn(error);
 			}
 
 			console.log('');
@@ -1325,7 +1332,7 @@ MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
 			});
 
 			if (error instanceof Error) {
-				console.error('warn: %s', error.message);
+				cmdutil.warn(error);
 			}
 
 			console.log('');
