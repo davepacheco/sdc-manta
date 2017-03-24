@@ -170,7 +170,7 @@ status of the program to determine success or failure.
 
 `manta-adm alarm faults ALARM_ID...`
 
-`manta-adm alarm list [-H] [-o FIELD...]`
+`manta-adm alarm list [-H] [-o FIELD...] [--state=STATE]`
 
 `manta-adm alarm metadata events`
 
@@ -284,9 +284,12 @@ stderr of the command are provided.  If the alarm relates to an error log entry,
 the contents of the log entry are provided.  There can be many faults associated
 with a single alarm.
 
-`manta-adm alarm list [-H] [-o FIELD...]`
+`manta-adm alarm list [-H] [-o FIELD...] [--state=STATE]`
 
-Lists open alarms in tabular form.  See also the `manta-adm alarm show` command.
+Lists alarms in tabular form.  `STATE` controls which alarms are listed, which
+may be any of "open", "closed", "all", or "recent".  The default is "open".
+
+See also the `manta-adm alarm show` command.
 
 `manta-adm alarm metadata events`
 
