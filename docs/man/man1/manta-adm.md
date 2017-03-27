@@ -158,7 +158,7 @@ status of the program to determine success or failure.
 
 `manta-adm alarm close ALARM_ID...`
 
-`manta-adm alarm config probegroups list [-H] [-o FIELD...]`
+`manta-adm alarm config probegroup list [-H] [-o FIELD...]`
 
 `manta-adm alarm config show`
 
@@ -223,7 +223,7 @@ resurface.  In the case of transient issues, a new alarm may not open again
 until the issue occurs again, which could be days, weeks, or months later.  That
 does not mean the underlying issue was actually resolved.
 
-`manta-adm alarm config probegroups list [-H] [-o FIELD...]`
+`manta-adm alarm config probegroup list [-H] [-o FIELD...]`
 
 List configured probe groups in tabular form.  This is primarily useful in
 debugging unexpected behavior from the alarms themselves.  The `manta-adm alarm
