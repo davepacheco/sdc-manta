@@ -1127,7 +1127,7 @@ function MantaAdmAlarmConfig(parent)
 
 util.inherits(MantaAdmAlarmConfig, cmdln.Cmdln);
 
-MantaAdmAlarmConfig.prototype.do_probegroups = MantaAdmAlarmProbeGroup;
+MantaAdmAlarmConfig.prototype.do_probegroup = MantaAdmAlarmProbeGroup;
 
 MantaAdmAlarmConfig.prototype.do_show = function (subcmd, opts, args, callback)
 {
@@ -1475,7 +1475,7 @@ MantaAdmAlarmProbeGroup.prototype.do_list.help = [
     '',
     'Usage:',
     '',
-    '    manta-adm alarm probegroup list OPTIONS',
+    '    manta-adm alarm config probegroup list OPTIONS',
     '',
     '{{options}}',
     '',
