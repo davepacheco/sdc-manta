@@ -145,8 +145,11 @@
             resolve the underlying issue.
 
 -
-    # XXX It would be far preferable if this alarm was one per shard
-    # XXX Given that it's not, should we make it one per zone?
+    #
+    # For the shard-wide probes (like the following one that faults when the
+    # shard is unhealthy), it would be nice if this were one probe group per
+    # shard, or at least one per zone, but that's not yet supported.
+    #
     event: upset.manta.postgres.shard_unhealthy
     legacyName: manatee-stat
     scope: 
@@ -182,7 +185,9 @@
             details.
 
 -
-    # XXX See above
+    #
+    # Like the above template, it would be great if this were per-shard.
+    #
     event: upset.manta.postgres.shard_transition
     legacyName: manatee-state-transition
     scope: 
