@@ -69,6 +69,12 @@ var maCommonOptions = {
 	'help': 'Number of concurrent requests to make',
 	'default': maDefaultAlarmConcurrency
     },
+    'configFile': {
+	'names': [ 'config-file' ],
+	'type': 'string',
+	'help': 'Path to configuration',
+	'default': common.CONFIG_FILE_DEFAULT
+    },
     'confirm': {
 	'names': [ 'confirm', 'y' ],
 	'type': 'bool',
@@ -80,7 +86,7 @@ var maCommonOptions = {
 	'help': 'Print what would be done without actually doing it.'
     },
     'logFile': {
-	'names': [ 'log_file', 'l' ],
+	'names': [ 'log_file', 'log-file', 'l' ],
 	'type': 'string',
 	'help': 'Dump logs to this file (or "stdout")',
 	'default': '/var/log/manta-adm.log'
@@ -523,6 +529,7 @@ MantaAdm.prototype.do_update.options = [
     maCommonOptions.logFile,
     maCommonOptions.dryrun,
     maCommonOptions.confirm,
+    maCommonOptions.configFile,
 {
     'names': [ 'no-reprovision' ],
     'type': 'bool',
@@ -765,6 +772,7 @@ MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (args, callback)
 	skipWarnings = args.skipWarnings;
 	clioptions = args.clioptions;
 	initArgs = {
+	    'configFile': clioptions.config_file,
 	    'concurrency': clioptions.concurrency || maDefaultAlarmConcurrency,
 	    'sources': args.sources
 	};
@@ -848,7 +856,8 @@ MantaAdmAlarm.prototype.do_close.help = [
 ].join('\n');
 
 MantaAdmAlarm.prototype.do_close.options = [
-    maCommonOptions.concurrency
+    maCommonOptions.concurrency,
+    maCommonOptions.configFile
 ];
 
 MantaAdmAlarm.prototype.do_config = MantaAdmAlarmConfig;
@@ -868,7 +877,9 @@ MantaAdmAlarm.prototype.do_details.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_details.options = [];
+MantaAdmAlarm.prototype.do_details.options = [
+    maCommonOptions.configFile
+];
 
 MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 {
@@ -885,7 +896,9 @@ MantaAdmAlarm.prototype.do_faults.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_faults.options = [];
+MantaAdmAlarm.prototype.do_faults.options = [
+    maCommonOptions.configFile
+];
 
 MantaAdmAlarm.prototype.doAlarmPrintSubcommand = function
     doAlarmPrintSubcommand(opts, nmaxfaults, args, callback)
@@ -995,6 +1008,7 @@ MantaAdmAlarm.prototype.do_list.help = [
 ].join('\n');
 
 MantaAdmAlarm.prototype.do_list.options = [
+    maCommonOptions.configFile,
     maCommonOptions.omitHeader,
     maCommonOptions.columns,
     {
@@ -1070,7 +1084,8 @@ MantaAdmAlarm.prototype.do_notify.help = [
 ].join('\n');
 
 MantaAdmAlarm.prototype.do_notify.options = [
-    maCommonOptions.concurrency
+    maCommonOptions.concurrency,
+    maCommonOptions.configFile
 ];
 
 MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
@@ -1111,7 +1126,7 @@ MantaAdmAlarm.prototype.do_show.help = [
     '{{options}}'
 ].join('\n');
 
-MantaAdmAlarm.prototype.do_show.options = [];
+MantaAdmAlarm.prototype.do_show.options = [ maCommonOptions.configFile ];
 
 
 function MantaAdmAlarmConfig(parent)
@@ -1170,7 +1185,8 @@ MantaAdmAlarmConfig.prototype.do_show.help = [
 ].join('\n');
 
 MantaAdmAlarmConfig.prototype.do_show.options = [
-    maCommonOptions.concurrency
+    maCommonOptions.concurrency,
+    maCommonOptions.configFile
 ];
 
 MantaAdmAlarmConfig.prototype.do_update =
@@ -1198,6 +1214,7 @@ MantaAdmAlarmConfig.prototype.do_update.help = [
 MantaAdmAlarmConfig.prototype.do_update.options = [
     maCommonOptions.confirm,
     maCommonOptions.concurrency,
+    maCommonOptions.configFile,
     maCommonOptions.dryrun,
     maCommonOptions.unconfigure
 ];
@@ -1225,6 +1242,7 @@ MantaAdmAlarmConfig.prototype.do_verify.help = [
 
 MantaAdmAlarmConfig.prototype.do_verify.options = [
     maCommonOptions.concurrency,
+    maCommonOptions.configFile,
     maCommonOptions.unconfigure
 ];
 
@@ -1363,7 +1381,9 @@ MantaAdmAlarmMetadata.prototype.do_events.help = [
     '    manta-adm alarm events'
 ].join('\n');
 
-MantaAdmAlarmMetadata.prototype.do_events.options = [];
+MantaAdmAlarmMetadata.prototype.do_events.options = [
+    maCommonOptions.configFile
+];
 
 MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
 {
@@ -1414,7 +1434,7 @@ MantaAdmAlarmMetadata.prototype.do_ka.help = [
     '    manta-adm alarm ka EVENT_NAME'
 ].join('\n');
 
-MantaAdmAlarmMetadata.prototype.do_ka.options = [];
+MantaAdmAlarmMetadata.prototype.do_ka.options = [ maCommonOptions.configFile ];
 
 
 function MantaAdmAlarmProbeGroup(parent)
@@ -1485,7 +1505,8 @@ MantaAdmAlarmProbeGroup.prototype.do_list.help = [
 
 MantaAdmAlarmProbeGroup.prototype.do_list.options = [
     maCommonOptions.omitHeader,
-    maCommonOptions.columns
+    maCommonOptions.columns,
+    maCommonOptions.configFile
 ];
 
 
