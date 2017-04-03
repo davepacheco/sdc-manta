@@ -11,6 +11,9 @@
 #
 # amon probes common to all services deployed to non-global zones
 #
+# For background information, see lib/alarms/index.js.  The format of this file
+# is described in lib/alarms/metadata.js.
+#
 
 -
     #

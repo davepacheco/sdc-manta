@@ -51,7 +51,7 @@ JSON_FILES	 = package.json \
 		   $(shell find config \
 				manifests \
 				sapi_manifests -name '*.json*')
-PROBE_FILES	 = $(wildcard alarms/probe_templates/*.yaml)
+PROBE_FILES	 = $(wildcard alarm_metadata/probe_templates/*.yaml)
 
 include ./tools/mk/Makefile.defs
 include ./tools/mk/Makefile.node_deps.defs
