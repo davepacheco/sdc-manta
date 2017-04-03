@@ -11,6 +11,9 @@
 #
 # amon probes for the "nameservice" service
 #
+# For background information, see lib/alarms/index.js.  The format of this file
+# is described in lib/alarms/metadata.js.
+#
 
 -
     event: upset.manta.nameservice.zookeeper.log_error

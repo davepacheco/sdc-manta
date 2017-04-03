@@ -9,33 +9,35 @@
 #
 
 #
-# amon probes for the "moray" service
+# amon probes for the "electric-moray" service
+#
+# For background information, see lib/alarms/index.js.  The format of this file
+# is described in lib/alarms/metadata.js.
 #
 
 -
-    event: upset.manta.moray.log_error
-    legacyName: moray-logscan
+    event: upset.manta.electric_moray.log_error
+    legacyName: electric-moray-logscan
     scope: 
-        service: moray
+        service: electric-moray
     checks: 
         - 
             type: bunyan-log-scan
             config: 
-                path: "/var/log/moray.log"
+                path: "/var/log/electric-moray.log"
                 fields: 
                     level: ERROR
                 threshold: 1
                 period: 60
     ka: 
-        title: '"moray" logged an error'
-        description: The "moray" service has logged an error.
+        title: '"electric-moray" logged an error'
+        description: The "electric-moray" service has logged an error.
         severity: major
         response: No automated response will be taken.
         impact: >-
-            If the problem was transient, there may be no impact.  Otherwise,
-            some end user requests may be experiencing errors or some jobs may
-            be experiencing errors or additional latency.
+            A small number of end-user requests may have failed.  Some job
+            tasks may experience increased latency to dispatch.  If the problem
+            persists, many requests and tasks may be affected.
         action: >-
             Determine the scope of the problem based on the log message and
             resolve the underlying issue.
-
