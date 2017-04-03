@@ -25,13 +25,14 @@
         "posix-getopt": "1.2.0",
         "progbar": "1.1.1",
         "readable-stream": "1.0.26",
+	"restify-clients": "1.5.0",
         "sdc-clients": "git+https://github.com/joyent/node-sdc-clients.git#42ea07d3ca",
         "sprintf-js": "0.0.7",
         "tab": "0.1.0",
         "urclient": "1.0.0",
         "vasync": "1.6.3",
         "verror": "1.9.0",
-	"wordwrap": "1.0.0",
+        "wordwrap": "1.0.0",
         "zonename": "1.1.0"
     }
 }
