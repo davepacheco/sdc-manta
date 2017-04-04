@@ -92,7 +92,7 @@ manpages: $(MAN_OUTPUTS)
 
 check:: $(NODE_EXEC) check-probe-files
 
-check-probe-files:
+check-probe-files: deps
 	$(PROBECHK) $(PROBE_FILES)
 
 .PHONY: test
