@@ -87,6 +87,16 @@ function main()
 		}
 	});
 
+	/*
+	 * Test serviceSupportsProbes().
+	 */
+	assertplus.deepEqual([ 'marlin', 'propeller' ], knownServices.filter(
+	    function (svcname) {
+		return (!services.serviceSupportsProbes(svcname));
+	    }));
+	assertplus.deepEqual(services.mSvcNamesProbes,
+	    services.mSvcNames.filter(services.serviceSupportsProbes));
+
 	console.error('%s tests passed', __filename);
 }
 
