@@ -20,7 +20,6 @@
 var assertplus = require('assert-plus');
 var bunyan = require('bunyan');
 var http = require('http');
-var jsprim = require('jsprim');
 var querystring = require('querystring');
 var restifyClients = require('restify-clients');
 var sdc = require('sdc-clients');
@@ -29,13 +28,11 @@ var vasync = require('vasync');
 var VError = require('verror');
 
 var alarms = require('../../lib/alarms');
+var mock_amon = require('./mock_amon');
 
-var account = 'mock-account-uuid';
-var mockAmonServer, mockAmonClient, mockAmonClientRaw;
-var mockAmonPort = 20175;
-var mockAmonDataCurrent = null;
-var mockAmonUrl = 'http://127.0.0.1:' + mockAmonPort;
+var account = mock_amon.account;
 var testCases = [];
+var mockAmon;
 
 function main()
 {
@@ -47,20 +44,9 @@ function main()
 	    'stream': process.stderr
 	});
 
-	mockAmonClient = new sdc.Amon({
-	    'log': log,
-	    'url': mockAmonUrl,
-	    'agent': false
-	});
+	mock_amon.createMockAmon(log, function (mock) {
+		mockAmon = mock;
 
-	mockAmonClientRaw = restifyClients.createJsonClient({
-	    'log': log,
-	    'url': mockAmonUrl,
-	    'agent': false
-	});
-
-	mockAmonServer = http.createServer(mockAmonHandleRequest);
-	mockAmonServer.listen(mockAmonPort, '127.0.0.1', function () {
 		/*
 		 * Run the actual test cases.
 		 */
@@ -72,71 +58,10 @@ function main()
 				throw (err);
 			}
 
-			mockAmonServer.close();
+			mockAmon.server.close();
 			console.log('%s okay', __filename);
 		});
 	});
-}
-
-/*
- * HTTP request handler that implements our mock Amon server.  This only
- * supports the few requests that we need to implement, and it serves data based
- * on the contents of the mockAmonDataCurrent file-scoped global variable.
- * Supported URLs are:
- *
- *     /pub/<account>/probegroups
- *
- *          The contents of the response are the JSON-encoded object at
- *          mockAmonDataCurrent.groups.  If this value is the special string
- *          'error', then a 500 error is returned instead.
- *
- *     /agentprobes?agent=AGENT
- *
- *          The contents of the response are the JSON-encoded object at
- *          mockAmonDataCurrent.agentprobes[AGENT] (where AGENT comes from the
- *          querystring).  If this value is the special string 'error', then a
- *          500 error is returned instead.
- *
- * Receiving any unsupported request or a request with bad arguments results in
- * an assertion failure.
- */
-function mockAmonHandleRequest(request, response)
-{
-	var data, parsedurl, params, urlparts;
-	var value;
-
-	data = mockAmonDataCurrent;
-	assertplus.object(data, 'data');
-	assertplus.object(data.agentprobes);
-
-	parsedurl = url.parse(request.url);
-	urlparts = parsedurl.pathname.split('/');
-	if (urlparts.length == 4 &&
-	    urlparts[0] === '' && urlparts[1] == 'pub' &&
-	    urlparts[2] == account && urlparts[3] == 'probegroups') {
-		value = data.groups;
-	} else if (urlparts.length == 2 && urlparts[0] === '' &&
-	    urlparts[1] == 'agentprobes') {
-		params = querystring.parse(parsedurl.query);
-		assertplus.string(params.agent,
-		    'missing expected amon request parameter');
-		value = data.agentprobes[params.agent];
-	} else {
-		throw (new VError('unimplemented URL: %s', request.url));
-	}
-
-	if (value == 'error') {
-		response.writeHead(500, {
-		    'content-type': 'application/json'
-		});
-		response.end(JSON.stringify({
-		    'code': 'InjectedError',
-		    'message': 'injected error'
-		}));
-	} else {
-		response.writeHead(200);
-		response.end(JSON.stringify(value));
-	}
 }
 
 /*
@@ -153,11 +78,11 @@ function mockAmonHandleRequest(request, response)
  *     components	names and types of each component whose probes should
  *     			be loaded from Amon.  See amonLoadComponentProbes().
  *
- *     amon		used to fill in mockAmonDataCurrent, which is used by
- *     			the mock Amon server's request handler.  This is how
- *     			test cases specify which probe groups and probes should
- *     			be returned by the mock Amon server.  See
- *     			mockAmonHandleRequest() for details.
+ *     amon		used to fill in the mock Amon server's current
+ *     			configuration, which is used by the mock Amon server's
+ *     			request handler.  This is how test cases specify which
+ *     			probe groups and probes should be returned by the mock
+ *     			Amon server.  See mockAmonHandleRequest() for details.
  *
  *     onLoaded		function to invoke after all this is done.  This accepts
  *     			arguments as onLoaded(pgerror, perror, pwarnings,
@@ -192,30 +117,30 @@ function mockAmonHandleRequest(request, response)
 function runTestCase(testcase, callback)
 {
 	console.log('test case: %s', testcase.name);
-	assertplus.strictEqual(mockAmonDataCurrent, null);
-	mockAmonDataCurrent = testcase.amon;
+	assertplus.strictEqual(mockAmon.config, null);
+	mockAmon.config = testcase.amon;
 
 	alarms.amonLoadProbeGroups({
-	    'amon': mockAmonClient,
+	    'amon': mockAmon.client,
 	    'account': account
 	}, function (lpgError, lpgConfig) {
-		assertplus.equal(mockAmonDataCurrent, testcase.amon);
+		assertplus.equal(mockAmon.config, testcase.amon);
 
 		if (!lpgConfig) {
-			mockAmonDataCurrent = null;
+			mockAmon.config = null;
 			testcase.onLoaded(lpgError, null, null, null);
 			callback();
 			return;
 		}
 
 		alarms.amonLoadComponentProbes({
-		    'amonRaw': mockAmonClientRaw,
+		    'amonRaw': mockAmon.clientRaw,
 		    'amoncfg': lpgConfig,
 		    'components': testcase.components,
 		    'concurrency': 10
 		}, function (lcpError, lcpWarnings) {
-			assertplus.equal(mockAmonDataCurrent, testcase.amon);
-			mockAmonDataCurrent = null;
+			assertplus.equal(mockAmon.config, testcase.amon);
+			mockAmon.config = null;
 			testcase.onLoaded(lpgError, lcpError,
 			    lcpWarnings, lpgConfig);
 			callback();
