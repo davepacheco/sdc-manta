@@ -832,7 +832,7 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 		    'concurrency': opts.concurrency
 		}, function (err) {
 			if (err) {
-				common.errorForEach(err, function (e) {
+				VError.errorForEach(err, function (e) {
 					console.error('error: %s', e.message);
 				});
 
@@ -1060,7 +1060,7 @@ MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 		    'suppressed': !allowedArg0[args[0]]
 		}, function (err) {
 			if (err) {
-				common.errorForEach(err, function (e) {
+				VError.errorForEach(err, function (e) {
 					console.error('error: %s', e.message);
 				});
 
