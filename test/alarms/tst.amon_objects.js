@@ -632,7 +632,7 @@ function generateTestCases()
 	    'name': 'probe: basic case (2)',
 	    'objtype': 'probe',
 	    'input': input,
-	    'verify': function verifyBasicProbe(p) {
+	    'verify': function verifyAltProbe(p) {
 		assertplus.strictEqual(p.p_uuid, 'uuid-1');
 		assertplus.strictEqual(p.p_name, 'probe-1');
 		assertplus.strictEqual(p.p_type, 'cmd');
