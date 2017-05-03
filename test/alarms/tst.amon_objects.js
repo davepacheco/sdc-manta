@@ -101,7 +101,7 @@ function runTestCase(tc)
 
 function generateTestCases()
 {
-	var validAlarm, input;
+	var validAlarm, validProbeGroup, validProbe, input;
 
 	testCases = [];
 
@@ -516,6 +516,163 @@ function generateTestCases()
 	    /* JSSTYLED */
 	    'errmsg': /alarm's "closed" is not consistent with "timeClosed"/
 	});
+
+
+	/*
+	 * Probe group objects
+	 */
+
+	validProbeGroup = {
+	    'uuid': 'uuid-1',
+	    'name': 'honor roller',
+	    'user': 'user-uuid-1',
+	    'disabled': false,
+	    'contacts': [ 'contact1', 'contact2' ]
+	};
+
+	testCases.push({
+	    'name': 'probe group: basic case',
+	    'objtype': 'probegroup',
+	    'input': validProbeGroup,
+	    'verify': function verifyBasicProbeGroup(pg) {
+		assertplus.strictEqual(pg.pg_name, 'honor roller');
+		assertplus.strictEqual(pg.pg_user, 'user-uuid-1');
+		assertplus.strictEqual(pg.pg_uuid, 'uuid-1');
+		assertplus.strictEqual(pg.pg_enabled, true);
+		assertplus.deepEqual(
+		    pg.pg_contacts, [ 'contact1', 'contact2' ]);
+	    }
+	});
+
+	input = jsprim.deepCopy(validProbeGroup);
+	input.disabled = true;
+	delete (input.contacts);
+	testCases.push({
+	    'name': 'probe group: disabled, no contacts',
+	    'objtype': 'probegroup',
+	    'input': input,
+	    'verify': function verifyDisabledProbeGroup(pg) {
+		assertplus.strictEqual(pg.pg_name, 'honor roller');
+		assertplus.strictEqual(pg.pg_user, 'user-uuid-1');
+		assertplus.strictEqual(pg.pg_uuid, 'uuid-1');
+		assertplus.strictEqual(pg.pg_enabled, false);
+		assertplus.deepEqual(pg.pg_contacts, []);
+	    }
+	});
+
+	[ 'uuid', 'name', 'user', 'disabled' ].forEach(
+	    function (prop) {
+		input = jsprim.deepCopy(validProbeGroup);
+		delete (input[prop]);
+		testCases.push({
+		    'name': 'probe group: missing "' + prop + '"',
+		    'objtype': 'probegroup',
+		    'input': input,
+		    'errmsg': new RegExp('property "' + prop + '":.*missing')
+		});
+
+		input = jsprim.deepCopy(validProbeGroup);
+		input[prop] = 37;
+		testCases.push({
+		    'name': 'probe group: bad type for "' + prop + '"',
+		    'objtype': 'probegroup',
+		    'input': input,
+		    'errmsg': new RegExp('property "' + prop +
+		        '": number value found, but.* is required')
+		});
+	    });
+
+	/*
+	 * Probe objects
+	 */
+
+	validProbe = {
+	    'uuid': 'uuid-1',
+	    'name': 'probe-1',
+	    'type': 'cmd',
+	    'config': {},
+	    'agent': 'agent-uuid-1',
+	    'groupEvents': false,
+	    'machine': null,
+	    'group': null,
+	    'contacts': [ 'contact1', 'contact2' ]
+	};
+
+	input = jsprim.deepCopy(validProbe);
+	testCases.push({
+	    'name': 'probe: basic case (1)',
+	    'objtype': 'probe',
+	    'input': input,
+	    'verify': function verifyBasicProbe(p) {
+		assertplus.strictEqual(p.p_uuid, 'uuid-1');
+		assertplus.strictEqual(p.p_name, 'probe-1');
+		assertplus.strictEqual(p.p_type, 'cmd');
+		assertplus.deepEqual(p.p_config, {});
+		assertplus.strictEqual(p.p_agent, 'agent-uuid-1');
+		assertplus.strictEqual(p.p_groupid, null);
+		assertplus.strictEqual(p.p_machine, null);
+		assertplus.deepEqual(p.p_contacts, [ 'contact1', 'contact2' ]);
+		assertplus.strictEqual(p.p_group_events, false);
+	    }
+	});
+
+	/*
+	 * Alternate valid probe: for the remaining tests, we'll use a probe
+	 * representation that more closely matches what we usually see in
+	 * practice: "groupEvents" is true; "machine" and "group" are specified;
+	 * and "contacts" is not.
+	 */
+	validProbe.groupEvents = true;
+	validProbe.machine = 'machine-uuid-1';
+	validProbe.group = 'group-uuid-1';
+	delete (validProbe.contacts);
+
+	input = jsprim.deepCopy(validProbe);
+	testCases.push({
+	    'name': 'probe: basic case (2)',
+	    'objtype': 'probe',
+	    'input': input,
+	    'verify': function verifyBasicProbe(p) {
+		assertplus.strictEqual(p.p_uuid, 'uuid-1');
+		assertplus.strictEqual(p.p_name, 'probe-1');
+		assertplus.strictEqual(p.p_type, 'cmd');
+		assertplus.deepEqual(p.p_config, {});
+		assertplus.strictEqual(p.p_agent, 'agent-uuid-1');
+		assertplus.strictEqual(p.p_groupid, 'group-uuid-1');
+		assertplus.strictEqual(p.p_machine, 'machine-uuid-1');
+		assertplus.deepEqual(p.p_contacts, null);
+		assertplus.strictEqual(p.p_group_events, true);
+	    }
+	});
+
+	/*
+	 * Test missing required fields.  Many of the fields that may be "null"
+	 * are still required.
+	 */
+	[ 'type', 'config', 'agent', 'groupEvents', 'machine',
+	    'group' ].forEach(function (prop) {
+		input = jsprim.deepCopy(validProbe);
+		delete (input[prop]);
+		testCases.push({
+		    'name': 'probe: missing prop "' + prop + '"',
+		    'objtype': 'probe',
+		    'input': input,
+		    'errmsg': new RegExp('property "' + prop + '":.*missing')
+		});
+	    });
+
+	[ 'uuid', 'name', 'type', 'config', 'agent', 'groupEvents',
+	    'machine', 'group', 'contacts' ].forEach(function (prop) {
+		input = jsprim.deepCopy(validProbe);
+		input[prop] = 37;
+		testCases.push({
+		    'name': 'probe: bad "' + prop + '"',
+		    'objtype': 'probe',
+		    'input': input,
+		    'errmsg': new RegExp('property "' + prop +
+		        '": number.*found.*required')
+		});
+	    });
 }
 
 main();
