@@ -19,11 +19,6 @@
 
 var assertplus = require('assert-plus');
 var bunyan = require('bunyan');
-var http = require('http');
-var querystring = require('querystring');
-var restifyClients = require('restify-clients');
-var sdc = require('sdc-clients');
-var url = require('url');
 var vasync = require('vasync');
 var VError = require('verror');
 
