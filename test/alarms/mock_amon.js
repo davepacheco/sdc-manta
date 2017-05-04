@@ -68,46 +68,110 @@ function createMockAmon(log, callback)
  * exactly what this server serves, and it can change it over time.  Supported
  * URLs are:
  *
- *     /pub/<account>/probegroups
- *
- *          The contents of the response are the JSON-encoded object at
- *          config.groups.  If this value is the special string 'error', then a
- *          500 error is returned instead.
- *
- *     /agentprobes?agent=AGENT
+ *     GET /agentprobes?agent=AGENT
  *
  *          The contents of the response are the JSON-encoded object at
  *          config.agentprobes[AGENT] (where AGENT comes from the querystring).
  *          If this value is the special string 'error', then a 500 error is
  *          returned instead.
  *
+ *     GET /pub/<account>/alarms?state=STATE
+ *
+ *          The contents of the response are the JSON-encoded object at
+ *          config.alarms[state].  If this value is the special string 'error',
+ *          then a 500 error is returned instead.
+ *
+ *     GET /pub/<account>/alarms/ALARM_ID.
+ *
+ *          The contents of the response are the JSON-encoded object at
+ *          config.alarms.by_id[ALARM_ID].  If this value is the special string
+ *          'error', then a 500 error is returned instead.  If this value is
+ *          missing, a 404 is returned.
+ *
+ *     POST /pub/<account>/alarms/ALARM_ID?action=ACTION
+ *
+ *          Uses the data in config.alarms.by_id[ALARM_ID] to determine whether
+ *          the request should fail with a 500 or 404, just like the similar GET
+ *          on the same path.  Successful requests complete with a 204 and
+ *          record that they happened in "config.alarms_$ACTION".
+ *
+ *     GET /pub/<account>/probegroups
+ *
+ *          The contents of the response are the JSON-encoded object at
+ *          config.groups.  If this value is the special string 'error', then a
+ *          500 error is returned instead.
+ *
  * Receiving any unsupported request or a request with bad arguments results in
  * an assertion failure.
  */
 function mockAmonHandleRequest(config, request, response)
 {
-	var parsedurl, params, urlparts, value;
+	var parsedurl, params, urlparts, value, code;
 
 	assertplus.object(config, 'config');
-	assertplus.object(config.agentprobes);
 
+	code = 200;
 	parsedurl = url.parse(request.url);
 	urlparts = parsedurl.pathname.split('/');
-	if (urlparts.length == 4 &&
+	if (request.method == 'GET' && urlparts.length == 4 &&
 	    urlparts[0] === '' && urlparts[1] == 'pub' &&
 	    urlparts[2] == account && urlparts[3] == 'probegroups') {
 		value = config.groups;
-	} else if (urlparts.length == 2 && urlparts[0] === '' &&
+	} else if (request.method == 'GET' &&
+	    urlparts.length == 2 && urlparts[0] === '' &&
 	    urlparts[1] == 'agentprobes') {
+		assertplus.object(config.agentprobes);
 		params = querystring.parse(parsedurl.query);
 		assertplus.string(params.agent,
-		    'missing expected amon request parameter');
+		    'missing expected amon request parameter: agent');
 		value = config.agentprobes[params.agent];
+	} else if (request.method == 'GET' &&
+	    urlparts.length == 4 && urlparts[0] === '' &&
+	    urlparts[1] == 'pub' && urlparts[2] == account &&
+	    urlparts[3] == 'alarms') {
+		assertplus.object(config.alarms);
+		params = querystring.parse(parsedurl.query);
+		assertplus.string(params.state,
+		    'missing expected amon request parameter: state');
+		assertplus.ok(config.alarms[params.state],
+		    'requested alarms for unhandled state: ' + params.state);
+		value = config.alarms[params.state];
+	} else if ((request.method == 'GET' || request.method == 'POST') &&
+	    urlparts.length == 5 && urlparts[0] === '' &&
+	    urlparts[1] == 'pub' && urlparts[2] == account &&
+	    urlparts[3] == 'alarms') {
+		assertplus.object(config.alarms);
+		assertplus.object(config.alarms.by_id);
+
+		if (!config.alarms.by_id[urlparts[4]]) {
+			code = 404;
+		} else if (request.method == 'GET' ||
+		    config.alarms.by_id[urlparts[4]] == 'error') {
+			value = config.alarms.by_id[urlparts[4]];
+		} else {
+			code = 204;
+			assertplus.equal(request.method, 'POST');
+			params = querystring.parse(parsedurl.query);
+			assertplus.string(params.action);
+			config['alarms_' + params.action].push(urlparts[4]);
+		}
 	} else {
-		throw (new VError('unimplemented URL: %s', request.url));
+		throw (new VError('unimplemented URL: %s %s',
+		    request.method, request.url));
 	}
 
-	if (value == 'error') {
+	if (code == 404) {
+		response.writeHead(404, {
+		    'content-type': 'application/json'
+		});
+		response.end(JSON.stringify({
+		    'code': 'NotFoundError',
+		    'message': 'alarm not found'
+		}));
+	} else if (code == 204) {
+		response.writeHead(204);
+		response.end();
+	} else if (value == 'error') {
 		response.writeHead(500, {
 		    'content-type': 'application/json'
 		});
@@ -116,7 +180,7 @@ function mockAmonHandleRequest(config, request, response)
 		    'message': 'injected error'
 		}));
 	} else {
-		response.writeHead(200);
+		response.writeHead(code);
 		response.end(JSON.stringify(value));
 	}
 }
