@@ -26,6 +26,88 @@ var mock_amon = require('./mock_amon');
 var services = require('../../lib/services');
 
 /*
+ * These test cases are somewhat tedious because in order to verify that the
+ * software is doing what we expect, we need to enumerate the expected probes
+ * and probe groups for various cases.  But there are also a lot of different
+ * cases to test:
+ *
+ *   - configuring and unconfiguring
+ *   - scopes that are per-service, for each service, or for all services
+ *   - global scopes
+ *   - cases where there are no instances of a service in this datacenter
+ *   - groups and probes that were operator-added
+ *   - groups and probes added by previous versions of the software
+ *   - cases where no changes need to be made
+ *   - cases where partial changes need to be made
+ *   XXX probes and probe groups from future versions
+ *   XXX autoEnv
+ *
+ * The goal is to exercise a set of test cases, each of which describes:
+ *
+ *   - a set of CNs and VMs in a datacenter
+ *   - a set of probe metadata (like the one shipped with this repository, but
+ *     much simpler)
+ *   - a set of probes and probe groups that are deployed already
+ *   - whether the test operation is a "configure" or "unconfigure" operation
+ *
+ * For each test case, we will generate an Amon update plan according to the
+ * parameters of the test case and verify its basic parameters (mostly: the
+ * numbers of groups and probes added and removed).
+ *
+ * We do this in a few stages:
+ *
+ *   (1) generateTestDatacenters() generates descriptions of a handful of
+ *       datacenters that we'll use for testing:
+ *
+ *       - "empty": a single, empty datacenter (degenerate case)
+ *       - "single": a single-datacenter case that we use to exercise most of
+ *         the cases
+ *       - "multi": a multi-datacenter case that we use only to sanity-test that
+ *         case
+ *
+ *   (2) generateTestMetadata() uses hardcoded metadata descriptions to load
+ *       probe metadata that exercises the various cases that we care about
+ *
+ *   (3) generateMockAmonObjects() uses the mock Amon server in this directory
+ *       to load sample hardcoded "deployed" probes and probe groups
+ *
+ *   (4) generateTestCases() generates the actual test cases, which are
+ *       expressed in terms of the above (a description of the datacenter we're
+ *       testing, the probe metadata to use, the set of groups and probes to
+ *       pretend are deployed, etc.)
+ *
+ * Finally, we run through all the test cases, invoking the verifier function to
+ * assert whatever the test case needs about the resulting plan.
+ */
+var testCases;
+
+/*
+ * Datacenter configurations
+ *
+ * See above.  This structure is filled in by generateTestDatacenters().
+ */
+var dcconfigs = {
+    'cfg_empty': new DatacenterConfig(),
+    'cfg_basic': new DatacenterConfig(),
+    'cfg_multi': new DatacenterConfig()
+};
+
+/*
+ * nInstancesBySvc is used to by generateTestDatacenters() to generate a list of
+ * fake VMs and CNs for a datacenter.  The only reason that the code we're
+ * testing isn't completely agnostic to service names is because the
+ * implementation of the "all" scope requires knowing all of the service names.
+ * We don't actually need to exercise every service differently, and doing so
+ * would be pretty tedious because we'll need to manually list out all of the
+ * expected probes for every instance.  So we only define a few instances and
+ * test out those.
+ */
+var nInstancesBySvc = {
+    'nameservice': 3,
+    'jobsupervisor': 2
+};
+
+/*
  * Parameters used for all of the tests.
  */
 var account = mock_amon.account;
@@ -36,100 +118,138 @@ var contactsBySeverity = {
 };
 
 /*
- * nInstancesBySvc is used to generate a list of fake VMs and CNs for a
- * datacenter.  The only reason that the code we're testing isn't completely
- * agnostic to service names is because the implementation of the "all" scope
- * requires knowing all of the service names.  We don't actually need to
- * exercise every service differently, and doing so would be pretty tedious
- * because we'll need to manually list out all of the expected probes for every
- * instance.  So we only define a few instances and test out those.
- */
-var nInstancesBySvc = {
-    'nameservice': 3,
-    'jobsupervisor': 2
-};
-
-/*
- * We will generate a few different groups of datacenter-related parameters:
+ * Probe metadata
  *
- * - configuration representing an empty datacenter
- * - configuration representing a complete single-DC deployment
- * - configuration representing one DC in a multi-DC deployment, where some
- *   normally-necessary services may not be in this DC (e.g., "ops")
- *
- * These are filled in by generateTestData().
+ * The raw objects below are processed using the normal metadata loading code to
+ * generate loaded versions.  We test a couple of different metadata
+ * configurations: one with no metadata (as a degenerate case) and another one
+ * that covers a bunch of the cases described above.
  */
-var testParamsByDcConfig = {
-    'cfg_empty': {
-	'ctp_servers': [],		/* local server uuids */
-	'ctp_instances': {},		/* all instances (all DCs) */
-	'ctp_instances_by_svcname': {},	/* local instances, by svcname */
-	'ctp_deployed_full': null,	/* deployed probes when full */
-	'ctp_deployed_none': null,	/* deployed probes when empty */
-	'ctp_deployed_extra': null	/* deployed probes when full, plus */
-    },
 
-    'cfg_basic': {
-	'ctp_servers': [],
-	'ctp_instances': {},
-	'ctp_instances_by_svcname': {},
-	'ctp_deployed_full': null,
-	'ctp_deployed_none': null,
-	'ctp_deployed_extra': null,
-	'dtp_deployed_partial': null
-    },
+/* loaded versions */
+var metadataEmpty, metadataBasic;
 
-    'cfg_multi': {
-	'ctp_servers': [],
-	'ctp_instances': {},
-	'ctp_instances_by_svcname': {},
-	'ctp_deployed_full': null,
-	'ctp_deployed_none': null,
-	'ctp_deployed_extra': null,
-	'dtp_deployed_partial': null
+/* raw versions (JSON representations of the metadata) */
+var rawMetadataEmpty = [];
+var rawMetadataBasic = [ {
+    /* scope: basic service scope */
+    'event': 'upset.manta.test.nameservice_broken',
+    'scope': { 'service': 'nameservice' },
+    'checks': [ {
+	'type': 'cmd',
+	'config': {
+	    'env': { 'complex': 'snpp' },
+	    'autoEnv': [ 'sector' ]
+	}
+    } ],
+    'ka': {
+	'title': 'test ka: basic "service" scope',
+	'description': 'exercises a basic "service" scope template',
+	'severity': 'minor',
+	'response': 'none',
+	'impact': 'none',
+	'action': 'none'
     }
-};
+}, {
+    /* scope: "global" */
+    'event': 'upset.manta.test.global',
+    'scope': { 'service': 'nameservice', 'global': true },
+    'checks': [ { 'type': 'cmd', 'config': {} } ],
+    'ka': {
+	'title': 'test ka: global "service" scope',
+	'description': 'exercises a global "service" scope template',
+	'severity': 'major',
+	'response': 'none',
+	'impact': 'none',
+	'action': 'none'
+    }
+}, {
+    /* scope: "each" */
+    'event': 'upset.manta.test.$service',
+    'scope': { 'service': 'each' },
+    'checks': [ { 'type': 'cmd', 'config': {} } ],
+    'ka': {
+	'title': 'test ka: each "service" scope',
+	'description': 'exercises an "each" "service" scope template',
+	'severity': 'critical',
+	'response': 'none',
+	'impact': 'none',
+	'action': 'none'
+    }
+}, {
+    /* scope: "all" */
+    'event': 'upset.manta.test.all',
+    'scope': { 'service': 'all' },
+    'checks': [ { 'type': 'cmd', 'config': {} } ],
+    'ka': {
+	'title': 'test ka: all "service" scope',
+	'description': 'exercises an "all" "service" scope template',
+	'severity': 'minor',
+	'response': 'none',
+	'impact': 'none',
+	'action': 'none'
+    }
+} ];
 
 /*
- * We'll test a couple of different metadata configurations: one with no
- * metadata (as a degenerate case), and a set of basic metadata that covers a
- * bunch of different cases:
- *
- *    - scopes: a specific service, "all", and "each"; normally, with "global",
- *      and with "checkFrom"
- *    - probes: a basic command, and one using "autoEnv"
+ * List of probe groups that should be deployed by the above metadata,
+ * regardless of the datacenter configuration.
  */
-var emptyMetadata, basicMetadata;
-var testCases;
+var deployedGroups = [ {
+    'uuid': 'deployed-group-uuid-1',
+    'name': 'upset.manta.test.nameservice_broken;v=1',
+    'user': account,
+    'disabled': false,
+    'contacts': contactsBySeverity.minor
+}, {
+    'uuid': 'deployed-group-uuid-2',
+    'name': 'upset.manta.test.global;v=1',
+    'user': account,
+    'disabled': false,
+    'contacts': contactsBySeverity.major
+}, {
+    'uuid': 'deployed-group-uuid-3',
+    'name': 'upset.manta.test.all;v=1',
+    'user': account,
+    'disabled': false,
+    'contacts': contactsBySeverity.minor
+} ];
 
 function main()
 {
-	generateTestData(function () {
-		generateTestCases();
-		testCases.forEach(runTestCase);
+	var log;
 
-	/*
-	 * XXX
-	 * Test cases that we want to exercise:
-	 * - given an incomplete DC within multi-DC, no probes, generate update
-	 *   plan
-	 *
-	 * - Clean up and document this test file.
-	 */
-		console.log('%s okay', __filename);
+	log = new bunyan({
+	    'name': 'tst.update.js',
+	    'level': process.env['LOG_LEVEL'] || 'fatal',
+	    'stream': process.stderr
+	});
+
+	generateTestDatacenters();
+	generateTestMetadata();
+	mock_amon.createMockAmon(log, function (mock) {
+		generateMockAmonObjects(mock, function () {
+			mock.server.close();
+			generateTestCases();
+			testCases.forEach(runTestCase);
+			console.log('%s okay', __filename);
+		});
 	});
 }
 
-function generateTestData(callback)
+/*
+ * Populates "dcconfigs" with a reasonable set of CNs and VMs for each of the
+ * three configurations we intend to test.
+ */
+function generateTestDatacenters()
 {
 	var instances, instancesBySvc, servernames;
-	var mdl, errors, log;
 
 	/*
 	 * The empty DC is easy: just set up the data structure.
 	 */
 	jsprim.forEachKey(nInstancesBySvc, function (svcname, n) {
-		testParamsByDcConfig.cfg_empty.ctp_instances_by_svcname[
+		dcconfigs.cfg_empty.ctp_instances_by_svcname[
 		    svcname] = [];
 	});
 
@@ -137,9 +257,8 @@ function generateTestData(callback)
 	 * For the basic single datacenter case, fake up instances in numbers
 	 * described by nInstancesBySvc.
 	 */
-	instances = testParamsByDcConfig.cfg_basic.ctp_instances;
-	instancesBySvc = testParamsByDcConfig.cfg_basic.
-	    ctp_instances_by_svcname;
+	instances = dcconfigs.cfg_basic.ctp_instances;
+	instancesBySvc = dcconfigs.cfg_basic.ctp_instances_by_svcname;
 	servernames = {};
 	jsprim.forEachKey(nInstancesBySvc, function (svcname, n) {
 		var i, instid, cnname;
@@ -168,14 +287,14 @@ function generateTestData(callback)
 			servernames[cnname] = true;
 		}
 	});
-	testParamsByDcConfig.cfg_basic.ctp_servers = Object.keys(servernames);
+	dcconfigs.cfg_basic.ctp_servers = Object.keys(servernames);
 
 	/*
 	 * For the multi-datacenter case, we need to fake up information about
 	 * instances in all three DCs.
 	 */
-	instances = testParamsByDcConfig.cfg_multi.ctp_instances;
-	instancesBySvc = testParamsByDcConfig.cfg_multi.
+	instances = dcconfigs.cfg_multi.ctp_instances;
+	instancesBySvc = dcconfigs.cfg_multi.
 	    ctp_instances_by_svcname;
 	servernames = {};
 	jsprim.forEachKey(nInstancesBySvc, function (svcname, n) {
@@ -220,106 +339,36 @@ function generateTestData(callback)
 			    iiargs);
 		}
 	});
-	testParamsByDcConfig.cfg_multi.ctp_servers = Object.keys(servernames);
-
-	/*
-	 * Now generate metadata.
-	 */
-	mdl = new alarm_metadata.MetadataLoader();
-	mdl.loadFromString('[]', 'input');
-	errors = mdl.errors();
-	assertplus.strictEqual(errors.length, 0);
-	emptyMetadata = mdl.mdl_amoncfg;
-
-	mdl = new alarm_metadata.MetadataLoader();
-	mdl.loadFromString(JSON.stringify([ {
-	    /* scope: basic service scope */
-	    'event': 'upset.manta.test.nameservice_broken',
-	    'scope': { 'service': 'nameservice' },
-	    'checks': [ {
-		'type': 'cmd',
-		'config': {
-		    'env': { 'complex': 'snpp' },
-		    'autoEnv': [ 'sector' ]
-		}
-	    } ],
-	    'ka': {
-		'title': 'test ka: basic "service" scope',
-		'description': 'exercises a basic "service" scope template',
-		'severity': 'minor',
-		'response': 'none',
-		'impact': 'none',
-		'action': 'none'
-	    }
-	}, {
-	    /* scope: "global" */
-	    'event': 'upset.manta.test.global',
-	    'scope': { 'service': 'nameservice', 'global': true },
-	    'checks': [ { 'type': 'cmd', 'config': {} } ],
-	    'ka': {
-		'title': 'test ka: global "service" scope',
-		'description': 'exercises a global "service" scope template',
-		'severity': 'major',
-		'response': 'none',
-		'impact': 'none',
-		'action': 'none'
-	    }
-	}, {
-	    /* scope: "each" */
-	    'event': 'upset.manta.test.$service',
-	    'scope': { 'service': 'each' },
-	    'checks': [ { 'type': 'cmd', 'config': {} } ],
-	    'ka': {
-		'title': 'test ka: each "service" scope',
-		'description': 'exercises an "each" "service" scope template',
-		'severity': 'critical',
-		'response': 'none',
-		'impact': 'none',
-		'action': 'none'
-	    }
-	}, {
-	    /* scope: "all" */
-	    'event': 'upset.manta.test.all',
-	    'scope': { 'service': 'all' },
-	    'checks': [ { 'type': 'cmd', 'config': {} } ],
-	    'ka': {
-		'title': 'test ka: all "service" scope',
-		'description': 'exercises an "all" "service" scope template',
-		'severity': 'minor',
-		'response': 'none',
-		'impact': 'none',
-		'action': 'none'
-	    }
-	} ]), 'input');
-	errors = mdl.errors();
-	assertplus.strictEqual(errors.length, 0);
-	basicMetadata = mdl.mdl_amoncfg;
-
-	/*
-	 * Now, load Amon configurations.  We could provide a side door way to
-	 * do this for testing, but it's nearly as easy to use our mock Amon
-	 * anyway.
-	 */
-	log = new bunyan({
-	    'name': 'tst.update.js',
-	    'level': process.env['LOG_LEVEL'] || 'fatal',
-	    'stream': process.stderr
-	});
-
-	mock_amon.createMockAmon(log, function (mock) {
-		loadDeployedProbes(mock, function () {
-			mock.server.close();
-			callback();
-		});
-	});
+	dcconfigs.cfg_multi.ctp_servers = Object.keys(servernames);
 }
 
 /*
- * Generate MantaAmonConfig objects corresponding to the sets of deployed probes
- * that we're going to check against later.  We'll generate configs representing
- * no probes deployed, all probes deployed, and some probes deployed.
+ * Load the raw metadata (hardcoded above).
  */
-function loadDeployedProbes(mock, callback)
+function generateTestMetadata()
+{
+	var mdl, errors;
+
+	mdl = new alarm_metadata.MetadataLoader();
+	mdl.loadFromString(JSON.stringify(rawMetadataEmpty), 'input');
+	errors = mdl.errors();
+	assertplus.strictEqual(errors.length, 0);
+	metadataEmpty = mdl.mdl_amoncfg;
+
+	mdl = new alarm_metadata.MetadataLoader();
+	mdl.loadFromString(JSON.stringify(rawMetadataBasic), 'input');
+	errors = mdl.errors();
+	assertplus.strictEqual(errors.length, 0);
+	metadataBasic = mdl.mdl_amoncfg;
+}
+
+/*
+ * Use the mock Amon server to load various combinations of probes and probe
+ * groups.  Unfortunately, these are extremely datacenter-specific and
+ * metadata-specific, so there's not a great way to avoid hardcoding a bunch of
+ * different combinations of deployed groups and probes.
+ */
+function generateMockAmonObjects(mock, callback)
 {
 	mock.config = {};
 	mock.config.groups = [];
@@ -331,7 +380,7 @@ function loadDeployedProbes(mock, callback)
 		 * empty DC configuration.
 		 */
 		function emptyDcNoProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_empty;
+			var dc = dcconfigs.cfg_empty;
 			loadDeployedForConfig(mock, dc, function (cfg) {
 				dc.ctp_deployed_none = cfg;
 				subcallback();
@@ -343,7 +392,7 @@ function loadDeployedProbes(mock, callback)
 		 * basic single-DC configuration.
 		 */
 		function basicDcNoProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_basic;
+			var dc = dcconfigs.cfg_basic;
 			loadDeployedForConfig(mock, dc, function (cfg) {
 				dc.ctp_deployed_none = cfg;
 				subcallback();
@@ -355,7 +404,7 @@ function loadDeployedProbes(mock, callback)
 		 * multi-DC configuration.
 		 */
 		function multiDcNoProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_multi;
+			var dc = dcconfigs.cfg_multi;
 			loadDeployedForConfig(mock, dc, function (cfg) {
 				dc.ctp_deployed_none = cfg;
 				subcallback();
@@ -367,27 +416,14 @@ function loadDeployedProbes(mock, callback)
 		 * deployed to the basic single-DC configuration.
 		 */
 		function basicDcFullProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_basic;
-			mock.config.groups = [ {
-			    'uuid': 'deployed-group-uuid-1',
-			    'name': 'upset.manta.test.nameservice_broken;v=1',
-			    'user': account,
-			    'disabled': false,
-			    'contacts': contactsBySeverity.minor
-			}, {
-			    'uuid': 'deployed-group-uuid-2',
-			    'name': 'upset.manta.test.global;v=1',
-			    'user': account,
-			    'disabled': false,
-			    'contacts': contactsBySeverity.major
-			}, {
-			    'uuid': 'deployed-group-uuid-3',
-			    'name': 'upset.manta.test.all;v=1',
-			    'user': account,
-			    'disabled': false,
-			    'contacts': contactsBySeverity.minor
-			} ];
+			var dc = dcconfigs.cfg_basic;
 
+			/*
+			 * Start with the hardcoded groups and add a group for
+			 * each service that supports probes to reflect the
+			 * "each" probe template.
+			 */
+			mock.config.groups = jsprim.deepCopy(deployedGroups);
 			services.mSvcNamesProbes.forEach(function (svcname, i) {
 				svcname = svcname.replace(/-/g, '_');
 				mock.config.groups.push({
@@ -401,6 +437,10 @@ function loadDeployedProbes(mock, callback)
 				});
 			});
 
+			/*
+			 * Define probes for each of the local instances for
+			 * each of the groups above.
+			 */
 			mock.config.agentprobes = {};
 			mock.config.agentprobes['svc-nameservice-0'] = [
 			    makeProbe({
@@ -527,7 +567,7 @@ function loadDeployedProbes(mock, callback)
 		 * group that doesn't exist.
 		 */
 		function basicDcExtraProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_basic;
+			var dc = dcconfigs.cfg_basic;
 			var nsagent = dc.ctp_instances_by_svcname[
 			    'nameservice'][0];
 
@@ -592,7 +632,7 @@ function loadDeployedProbes(mock, callback)
 		 * 1,000 that would be returned from Amon.
 		 */
 		function basicDcPartialProbes(subcallback) {
-			var dc = testParamsByDcConfig.cfg_basic;
+			var dc = dcconfigs.cfg_basic;
 			var groupToRm = 'deployed-group-uuid-svc-nameservice';
 			var nsagent = dc.ctp_instances_by_svcname[
 			    'nameservice'][0];
@@ -633,7 +673,6 @@ function loadDeployedProbes(mock, callback)
 				subcallback();
 			});
 		}
-
 	], function (err) {
 		assertplus.ok(!err);
 		callback();
@@ -641,12 +680,18 @@ function loadDeployedProbes(mock, callback)
 }
 
 /*
- * Given the mock Amon configuration, load deployed probe groups and probes.
+ * Given the mock Amon configuration and the specified datacenter configuraiton,
+ * load the set of deployed probe groups and probes.
  */
 function loadDeployedForConfig(mock, dcconfig, callback)
 {
 	var components;
 
+	/*
+	 * We use the datacenter description to assemble a list of components
+	 * for which to fetch probes and then defer to the usual code path to
+	 * actually load the objects.
+	 */
 	assertplus.object(dcconfig.ctp_servers);
 	components = [];
 	dcconfig.ctp_servers.forEach(function (s) {
@@ -680,7 +725,7 @@ function loadDeployedForConfig(mock, dcconfig, callback)
 
 function generateTestCases()
 {
-	var ngroupsfull, nprobesfull;
+	var ngroupsfull, nprobesfull, nprobesmulti;
 
 	testCases = [];
 
@@ -688,10 +733,10 @@ function generateTestCases()
 	 * There are three non-"each" templates, plus an "each" template
 	 * that generates a group for each service that supports probes.
 	 */
-	ngroupsfull = 3 + services.mSvcNamesProbes.length;
+	ngroupsfull = deployedGroups.length + services.mSvcNamesProbes.length;
 
 	/*
-	 * We've got:
+	 * For the single-DC case, we've got:
 	 *
 	 *   - 3 "nameservice" probes for the "nameservice" template
 	 *   - 2 "global" probes for the "global" template
@@ -703,10 +748,23 @@ function generateTestCases()
 	 */
 	nprobesfull = 15;
 
+	/*
+	 * For the multi-DC case, we've got:
+	 *
+	 *   - 1 "nameservice" probe for the "nameservice" template
+	 *     (because other instances are in other DCs)
+	 *   - 1 "global" probe for the "global" template
+	 *     (again, because other nameservice instances are in other DCs)
+	 *   - 1 "nameservice" probe for the "each" template
+	 *   - 1 "jobsupevisor" probe for the "each" template
+	 *   - 2 probes for the "all" template
+	 */
+	nprobesmulti = 6;
+
 	testCases.push({
 	    'name': 'empty DC, undeployed, configure with no metadata',
-	    'metadata': emptyMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_empty,
+	    'metadata': metadataEmpty,
+	    'dcConfig': dcconfigs.cfg_empty,
 	    'deployed': 'none',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -720,8 +778,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'empty DC, undeployed, configure (add groups only)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_empty,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_empty,
 	    'deployed': 'none',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -735,8 +793,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'empty DC, undeployed, unconfigure (no changes)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_empty,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_empty,
 	    'deployed': 'none',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -750,8 +808,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, undeployed, configure with no metadata',
-	    'metadata': emptyMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataEmpty,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'none',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -765,8 +823,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, undeployed, configure (many changes)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'none',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -780,8 +838,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, undeployed, unconfigure (no changes)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'none',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -795,8 +853,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, deployed, configure with no metadata',
-	    'metadata': emptyMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataEmpty,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'full',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -812,8 +870,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, deployed, configure (no changes)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'full',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -827,8 +885,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, deployed, unconfigure (many changes)',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'full',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -844,8 +902,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, deployed with extra, configure',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'extra',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -861,8 +919,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, deployed with extra, unconfigure',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'extra',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -883,8 +941,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, partially deployed, configure',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'partial',
 	    'unconfigure': false,
 	    'verify': function (plan) {
@@ -906,8 +964,8 @@ function generateTestCases()
 
 	testCases.push({
 	    'name': 'basic DC, partially deployed, unconfigure',
-	    'metadata': basicMetadata,
-	    'dcConfig': testParamsByDcConfig.cfg_basic,
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_basic,
 	    'deployed': 'partial',
 	    'unconfigure': true,
 	    'verify': function (plan) {
@@ -930,6 +988,22 @@ function generateTestCases()
 		    nprobesfull - 3);
 		assertplus.strictEqual(plan.mup_groups_add.length, 0);
 		assertplus.strictEqual(plan.mup_probes_add.length, 0);
+	    }
+	});
+
+	testCases.push({
+	    'name': 'multi DC, undeployed, configure',
+	    'metadata': metadataBasic,
+	    'dcConfig': dcconfigs.cfg_multi,
+	    'deployed': 'none',
+	    'unconfigure': false,
+	    'verify': function (plan) {
+		assertplus.ok(plan.needsChanges());
+		assertplus.strictEqual(plan.mup_groups_remove.length, 0);
+		assertplus.strictEqual(plan.mup_probes_remove.length, 0);
+		assertplus.strictEqual(plan.mup_groups_add.length, ngroupsfull);
+		assertplus.strictEqual(plan.mup_probes_add.length,
+		    nprobesmulti);
 	    }
 	});
 }
@@ -977,6 +1051,21 @@ function makeProbe(params)
 	    'machine': machine,
 	    'groupEvents': true
 	});
+}
+
+function DatacenterConfig()
+{
+	/* CN uuids for local servers */
+	this.ctp_servers = [];
+	/* all instances in all DCs (mapping instance uuid -> InstanceInfo) */
+	this.ctp_instances = {};
+	/* local instances (mapping svcname -> array of instance uuids) */
+	this.ctp_instances_by_svcname = {};
+
+	/* Deployed Amon objects */
+	this.ctp_deployed_full = null;	/* when full */
+	this.ctp_deployed_none = null;	/* when empty */
+	this.ctp_deployed_extra = null;	/* when full, plus a few other cases */
 }
 
 main();
