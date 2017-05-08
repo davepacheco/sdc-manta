@@ -40,13 +40,6 @@ function main()
 	    'stream': process.stderr
 	});
 
-	/*
-	 * XXX:
-	 * - verify very basic structure
-	 * - disable notification on a few of them, including one of each of the
-	 *   above types
-	 * - close a few others
-	 */
 	vasync.waterfall([
 		function init(callback) {
 			mock_amon.createMockAmon(log, function (mock) {
