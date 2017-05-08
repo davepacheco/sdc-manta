@@ -37,6 +37,7 @@ function createMockAmon(log, callback)
 	port = mockAmonPortBase++;
 
 	mock = { 'config': null };
+	mock.log = log;
 	mock.url = 'http://127.0.0.1:' + port;
 	mock.client = new sdc.Amon({
 	    'log': log,
@@ -52,7 +53,7 @@ function createMockAmon(log, callback)
 
 	mock.server = http.createServer(
 	    function handleRequest(request, response) {
-		mockAmonHandleRequest(mock.config, request, response);
+		mockAmonHandleRequest(mock.log, mock.config, request, response);
 	    });
 
 	mock.server.listen(port, '127.0.0.1', function () {
@@ -104,11 +105,16 @@ function createMockAmon(log, callback)
  * Receiving any unsupported request or a request with bad arguments results in
  * an assertion failure.
  */
-function mockAmonHandleRequest(config, request, response)
+function mockAmonHandleRequest(log, config, request, response)
 {
 	var parsedurl, params, urlparts, value, code;
 
 	assertplus.object(config, 'config');
+
+	log.debug({
+	    'method': request.method,
+	    'url': request.url
+	}, 'mock amon: handling request');
 
 	code = 200;
 	parsedurl = url.parse(request.url);
@@ -125,6 +131,9 @@ function mockAmonHandleRequest(config, request, response)
 		assertplus.string(params.agent,
 		    'missing expected amon request parameter: agent');
 		value = config.agentprobes[params.agent];
+		if (value === undefined) {
+			value = [];
+		}
 	} else if (request.method == 'GET' &&
 	    urlparts.length == 4 && urlparts[0] === '' &&
 	    urlparts[1] == 'pub' && urlparts[2] == account &&
