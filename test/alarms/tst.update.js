@@ -39,8 +39,6 @@ var services = require('../../lib/services');
  *   - groups and probes added by previous versions of the software
  *   - cases where no changes need to be made
  *   - cases where partial changes need to be made
- *   XXX probes and probe groups from future versions
- *   XXX autoEnv
  *
  * The goal is to exercise a set of test cases, each of which describes:
  *
@@ -440,6 +438,11 @@ function generateMockAmonObjects(mock, callback)
 			/*
 			 * Define probes for each of the local instances for
 			 * each of the groups above.
+			 *
+			 * Specifying the environment here implicitly tests the
+			 * behavior of the "autoEnv" property, since if it
+			 * didn't work, the software would make additional
+			 * changes to the deployed probes.
 			 */
 			mock.config.agentprobes = {};
 			mock.config.agentprobes['svc-nameservice-0'] = [
@@ -562,9 +565,10 @@ function generateMockAmonObjects(mock, callback)
 
 		/*
 		 * To the previous configuration, add the legacy probe group,
-		 * the operator-created probe group, the probes for these, and
-		 * the probe that has no probe group, and the probe that has a
-		 * group that doesn't exist.
+		 * the operator-created probe group, the probe group from a
+		 * future version, the probes for these, the probe that has no
+		 * probe group, and the probe that has a group that doesn't
+		 * exist.
 		 */
 		function basicDcExtraProbes(subcallback) {
 			var dc = dcconfigs.cfg_basic;
@@ -579,6 +583,13 @@ function generateMockAmonObjects(mock, callback)
 			    'contacts': [ 'operator-contact-1' ]
 			});
 			mock.config.groups.push({
+			    'uuid': 'future-group-1',
+			    'name': 'upset.manta.future;v=2',
+			    'user': account,
+			    'disabled': false,
+			    'contacts': [ 'operator-contact-2' ]
+			});
+			mock.config.groups.push({
 			    'uuid': 'nameservice-alert-uuid',
 			    'name': 'nameservice-alert',
 			    'user': account,
@@ -591,6 +602,12 @@ function generateMockAmonObjects(mock, callback)
 			    makeProbe({
 			        'name': 'operator-1',
 			        'group': 'operator-group-1'
+			    }));
+			/* probe from the future */
+			mock.config.agentprobes['server-uuid-0'].push(
+			    makeProbe({
+			        'name': 'future-1',
+				'group': 'future-group-1'
 			    }));
 			/* probe having no group at all */
 			mock.config.agentprobes['server-uuid-0'].push(
