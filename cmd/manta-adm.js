@@ -91,6 +91,11 @@ var maCommonOptions = {
 	'help': 'Dump logs to this file (or "stdout")',
 	'default': '/var/log/manta-adm.log'
     },
+    'logFileDefaultNone': {
+	'names': [ 'log_file', 'log-file', 'l' ],
+	'type': 'string',
+	'help': 'Dump logs to this file (or "stdout")'
+    },
     'omitHeader': {
 	'names': [ 'omit-header', 'H'],
 	'type': 'bool',
@@ -227,7 +232,7 @@ MantaAdm.prototype.do_cn.help =
 
 MantaAdm.prototype.do_cn.options = [
     maCommonOptions.omitHeader,
-    maCommonOptions.logFile,
+    maCommonOptions.logFileDefaultNone,
     {
 	'names': [ 'oneachnode', 'n' ],
 	'type': 'bool',
@@ -422,7 +427,7 @@ MantaAdm.prototype.do_show.options = [ {
     'type': 'bool',
     'help': 'Show results in JSON form suitable for importing with "update".'
 },
-    maCommonOptions.logFile,
+    maCommonOptions.logFileDefaultNone,
     maCommonOptions.columns,
  {
     'names': [ 'summary', 's' ],
@@ -617,7 +622,7 @@ MantaAdmZk.prototype.do_list.help =
  */
 MantaAdmZk.prototype.do_list.options = [
     maCommonOptions.omitHeader,
-    maCommonOptions.logFile,
+    maCommonOptions.logFileDefaultNone,
     maCommonOptions.columns
 ];
 
