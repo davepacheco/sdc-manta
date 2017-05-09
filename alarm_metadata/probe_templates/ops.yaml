@@ -380,7 +380,7 @@
                     type: substring
     ka: 
         title: Recent metering summary report missing
-        description: The most recent metering summary report could not be found.
+        description: A metering summary report could not be found.
         severity: minor
         response: No automated response will be taken.
         impact: >-
@@ -409,7 +409,7 @@
                     type: substring
     ka: 
         title: Recent metering storage report missing
-        description: The most recent metering storage report could not be found.
+        description: A metering storage report could not be found.
         severity: minor
         response: No automated response will be taken.
         impact: >-
@@ -437,7 +437,7 @@
                     type: substring
     ka: 
         title: Recent metering request report missing
-        description: The most recent metering request report could not be found.
+        description: A metering request report could not be found.
         severity: minor
         response: No automated response will be taken.
         impact: >-
@@ -466,7 +466,7 @@
                     type: substring
     ka: 
         title: Recent metering compute report missing
-        description: The most recent metering compute report could not be found.
+        description: A metering compute report could not be found.
         severity: minor
         response: No automated response will be taken.
         impact: >-
