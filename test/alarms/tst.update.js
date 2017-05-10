@@ -286,6 +286,8 @@ function generateTestDatacenters()
 		}
 	});
 	dcconfigs.cfg_basic.ctp_servers = Object.keys(servernames);
+	dcconfigs.cfg_basic.ctp_vms_destroyed = [ 'destroyed-nameservice' ];
+	dcconfigs.cfg_basic.ctp_servers_abandoned = [ 'abandoned-cn' ];
 
 	/*
 	 * For the multi-datacenter case, we need to fake up information about
@@ -640,13 +642,9 @@ function generateMockAmonObjects(mock, callback)
 		 * software does the right thing for smaller, incremental
 		 * updates.
 		 *
-		 * It would be ideal in this test case to also add a probe for
-		 * an existing, automatically-managed probe group to a zone that
-		 * no longer exists so that we could test cleaning these up.
-		 * However, by the way we've designed this mechanism, we won't
-		 * clean these up, and in general there's no way for us to even
-		 * identify such probes unless they happen to be in the first
-		 * 1,000 that would be returned from Amon.
+		 * We also add a probe for an existing, automatically-managed
+		 * probe group and a zone that no longer exists to test that we
+		 * clean these up.
 		 */
 		function basicDcPartialProbes(subcallback) {
 			var dc = dcconfigs.cfg_basic;
@@ -685,6 +683,26 @@ function generateMockAmonObjects(mock, callback)
 				return (p.group != 'deployed-group-uuid-1');
 			    });
 
+			/*
+			 * Create probes for destroyed VMs and for a CN
+			 * associated with a destroyed VM.
+			 */
+			mock.config.agentprobes['destroyed-nameservice'] = [
+			    makeProbe({
+			        'group': 'deployed-group-uuid-1',
+				'name': 'upset.manta.test.nameservice_broken0',
+				'agent': 'destroyed-nameservice'
+			    })
+			];
+
+			mock.config.agentprobes['abandoned-cn'] = [
+			    makeProbe({
+				'group': 'deployed-group-uuid-2',
+				'name': 'upset.manta.test.global0',
+				'agent': 'abandoned-cn'
+			    })
+			];
+
 			loadDeployedForConfig(mock, dc, function (cfg) {
 				dc.ctp_deployed_partial = cfg;
 				subcallback();
@@ -720,6 +738,12 @@ function loadDeployedForConfig(mock, dcconfig, callback)
 		}
 
 		components.push({ 'type': 'vm', 'uuid': instance.inst_uuid });
+	});
+	dcconfig.ctp_vms_destroyed.forEach(function (uuid) {
+		components.push({ 'type': 'vm', 'uuid': uuid });
+	});
+	dcconfig.ctp_servers_abandoned.forEach(function (s) {
+		components.push({ 'type': 'cn', 'uuid': s });
 	});
 
 	alarms.amonLoadProbeGroups({
@@ -965,9 +989,13 @@ function generateTestCases()
 	    'verify': function (plan) {
 		assertplus.ok(plan.needsChanges());
 
-		/* We expect to remove the legacy probe group and its probe. */
+		/*
+		 * We expect to remove the legacy probe group, its probe,
+		 * and the VM-level and CN-level probes for the VM that no
+		 * longer exists and the CN that no longer hosts any VMs.
+		 */
 		assertplus.strictEqual(plan.mup_groups_remove.length, 1);
-		assertplus.strictEqual(plan.mup_probes_remove.length, 1);
+		assertplus.strictEqual(plan.mup_probes_remove.length, 3);
 
 		/*
 		 * We expect to add one group that was missing, plus one probe
@@ -999,10 +1027,11 @@ function generateTestCases()
 		/*
 		 * Similarly, we expect to remove all of the usual probes except
 		 * for the four that were already missing (because this was a
-		 * partial deployment), plus the legacy one.
+		 * partial deployment), plus the legacy one, plus the one each
+		 * for the VM and CN that no longer exist.
 		 */
 		assertplus.strictEqual(plan.mup_probes_remove.length,
-		    nprobesfull - 3);
+		    nprobesfull - 1);
 		assertplus.strictEqual(plan.mup_groups_add.length, 0);
 		assertplus.strictEqual(plan.mup_probes_add.length, 0);
 	    }
@@ -1078,6 +1107,12 @@ function DatacenterConfig()
 	this.ctp_instances = {};
 	/* local instances (mapping svcname -> array of instance uuids) */
 	this.ctp_instances_by_svcname = {};
+
+	/* destroyed VMs (list of uuids) */
+	this.ctp_vms_destroyed = [];
+
+	/* abandoned CNs (list of uuids) */
+	this.ctp_servers_abandoned = [];
 
 	/* Deployed Amon objects */
 	this.ctp_deployed_full = null;	/* when full */
