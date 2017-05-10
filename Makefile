@@ -52,7 +52,6 @@ JSON_FILES	 = package.json \
 				manifests \
 				sapi_manifests -name '*.json*')
 PROBE_FILES	 = $(wildcard alarm_metadata/probe_templates/*.yaml)
-DEPS_STAMP	 = .npm-deps-stamp
 
 include ./tools/mk/Makefile.defs
 include ./tools/mk/Makefile.node_deps.defs
@@ -93,7 +92,7 @@ manpages: $(MAN_OUTPUTS)
 
 check:: $(NODE_EXEC) check-probe-files
 
-check-probe-files: $(DEPS_STAMP)
+check-probe-files:
 	$(PROBECHK) $(PROBE_FILES)
 
 .PHONY: test
@@ -103,11 +102,8 @@ test: | $(CATEST)
 $(CATEST): deps/catest/.git
 
 .PHONY: deps
-deps: | $(DEPS_STAMP)
-
-$(DEPS_STAMP): $(REPO_DEPS) $(NPM_EXEC) package.json
+deps: | $(REPO_DEPS) $(NPM_EXEC)
 	$(NPM_ENV) $(NPM) install
-	touch $(DEPS_STAMP)
 
 .PHONY: release
 release: all deps docs $(SMF_MANIFESTS)

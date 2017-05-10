@@ -6,5 +6,7 @@ docs/*.html
 cscope.in.out
 cscope.po.out
 cscope.out
+proto/
 manta-deployment-pkg-*
-.npm-deps-stamp
+/webrev
+abandoned
