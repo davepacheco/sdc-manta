@@ -90,10 +90,18 @@ all: $(SMF_MANIFESTS) deps sdc-scripts
 .PHONY: manpages
 manpages: $(MAN_OUTPUTS)
 
-check:: $(NODE_EXEC) check-probe-files
+check:: $(NODE_EXEC)
 
+#
+# We'd like to run "check-probe-files" under "check", but this requires
+# MANTA-3251 in order to work in the context of CI checks.  However, we can at
+# least put this under "prepush", which (for better or worse) already can't
+# generally be run in anonymous CI environments.
+#
 check-probe-files:
 	$(PROBECHK) $(PROBE_FILES)
+
+prepush: check-probe-files
 
 .PHONY: test
 test: | $(CATEST)
