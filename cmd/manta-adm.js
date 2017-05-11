@@ -122,6 +122,10 @@ function MantaAdm()
 
 util.inherits(MantaAdm, cmdln.Cmdln);
 
+/*
+ * Performs common initialization steps used by most subcommands.  "opts" are
+ * the cmdln-parsed CLI options.  This function processes the "log_file" option.
+ */
 MantaAdm.prototype.initAdm = function (opts, callback)
 {
 	var logstreams;
@@ -311,7 +315,7 @@ MantaAdm.prototype.do_genconfig = function (subcmd, opts, args, callback)
 };
 
 MantaAdm.prototype.do_genconfig.help =
-    'Generate a configuration for COAL, lab, or larger deployment.\n' +
+    'Generate a config for COAL, lab, or a larger deployment.\n' +
     '\n' +
     'Usage:\n' +
     '\n' +
@@ -763,6 +767,25 @@ function MantaAdmAlarm(parent)
 
 util.inherits(MantaAdmAlarm, cmdln.Cmdln);
 
+/*
+ * Performs common initialization steps used for the "manta-adm alarm"
+ * subcommands.  Named arguments:
+ *
+ *     sources      Describes which data to load.  See alarmsInit in lib/adm.js.
+ *
+ *     clioptions   Parsed CLI options, as provided by node-cmdln.  This
+ *                  function processes the "concurrency" and "config_file"
+ *                  options, plus the options processed by initAdm().
+ *
+ *     skipWarnings By default, warnings encountered while fetching alarm
+ *                  configuration are printed out.  If this option is true, then
+ *                  these warnings are ignored.
+ *
+ *     skipFetch    By default, Triton objects (VMs, CNs, and SAPI information)
+ *                  are fetched.  This takes some time, but this information is
+ *                  needed by most subcommands.  If this option is true, then
+ *                  this step is skipped.
+ */
 MantaAdmAlarm.prototype.initAdmAndFetchAlarms = function (args, callback)
 {
 	var self = this;
@@ -1236,7 +1259,7 @@ MantaAdmAlarmConfig.prototype.do_verify =
 };
 
 MantaAdmAlarmConfig.prototype.do_verify.help = [
-    'Check that configured probes and probe groups are up to date.',
+    'Check that deployed probes and probe groups are up to date.',
     '',
     'Usage:',
     '',

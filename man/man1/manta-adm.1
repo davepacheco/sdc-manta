@@ -155,7 +155,7 @@ status of the program to determine success or failure.
 .PP
 \fB\fCmanta\-adm alarm close ALARM_ID...\fR
 .PP
-\fB\fCmanta\-adm alarm config probegroups list [\-H] [\-o FIELD...]\fR
+\fB\fCmanta\-adm alarm config probegroup list [\-H] [\-o FIELD...]\fR
 .PP
 \fB\fCmanta\-adm alarm config show\fR
 .PP
@@ -167,7 +167,7 @@ status of the program to determine success or failure.
 .PP
 \fB\fCmanta\-adm alarm faults ALARM_ID...\fR
 .PP
-\fB\fCmanta\-adm alarm list [\-H] [\-o FIELD...]\fR
+\fB\fCmanta\-adm alarm list [\-H] [\-o FIELD...] [\-\-state=STATE]\fR
 .PP
 \fB\fCmanta\-adm alarm metadata events\fR
 .PP
@@ -230,7 +230,7 @@ resurface.  In the case of transient issues, a new alarm may not open again
 until the issue occurs again, which could be days, weeks, or months later.  That
 does not mean the underlying issue was actually resolved.
 .PP
-\fB\fCmanta\-adm alarm config probegroups list [\-H] [\-o FIELD...]\fR
+\fB\fCmanta\-adm alarm config probegroup list [\-H] [\-o FIELD...]\fR
 .PP
 List configured probe groups in tabular form.  This is primarily useful in
 debugging unexpected behavior from the alarms themselves.  The \fB\fCmanta\-adm alarm
@@ -288,17 +288,20 @@ response, and suggested actions for this issue.
 .PP
 \fB\fCmanta\-adm alarm faults ALARM_ID...\fR
 .PP
-Prints detailed information about the events (faults) associated with any number
-of alarms.  The specific information provided depends on the alarm.  If the
-alarm related to a failed health check command, then the exit status,
-terminating signal, stdout, and stderr of the command are provided.  If the
-alarm relates to an error log entry, the contents of the log entry are provided.
-There can be many faults associated with a single alarm, though not all of them
-are reported by this command.
+Prints detailed information about the faults associated with any number of
+alarms.  Each fault represents a particular probe failure.  The specific
+information provided depends on the alarm.  If the alarm related to a failed
+health check command, then the exit status, terminating signal, stdout, and
+stderr of the command are provided.  If the alarm relates to an error log entry,
+the contents of the log entry are provided.  There can be many faults associated
+with a single alarm.
 .PP
-\fB\fCmanta\-adm alarm list [\-H] [\-o FIELD...]\fR
+\fB\fCmanta\-adm alarm list [\-H] [\-o FIELD...] [\-\-state=STATE]\fR
 .PP
-Lists open alarms in tabular form.  See also the \fB\fCmanta\-adm alarm show\fR command.
+Lists alarms in tabular form.  \fB\fCSTATE\fR controls which alarms are listed, which
+may be any of "open", "closed", "all", or "recent".  The default is "open".
+.PP
+See also the \fB\fCmanta\-adm alarm show\fR command.
 .PP
 \fB\fCmanta\-adm alarm metadata events\fR
 .PP
