@@ -16,7 +16,6 @@
 
 var cmdutil = require('cmdutil');
 var vasync = require('vasync');
-var VError = require('verror');
 
 var alarm_metadata = require('../lib/alarms/metadata');
 var nerrors = 0;
