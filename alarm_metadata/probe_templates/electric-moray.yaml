@@ -18,18 +18,18 @@
 -
     event: upset.manta.electric_moray.log_error
     legacyName: electric-moray-logscan
-    scope: 
+    scope:
         service: electric-moray
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/electric-moray.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"electric-moray" logged an error'
         description: The "electric-moray" service has logged an error.
         severity: major

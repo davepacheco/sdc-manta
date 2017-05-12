@@ -552,19 +552,12 @@ care should be taken when using it with stateful services like "postgres" or
 "storage".  See the Manta Operator's Guide for the appropriate procedures for
 upgrading all components.**
 
-Options:
-
-`-n, --dryrun`
-  Print what changes would be made without actually making them.
-
-`-y, --confirm`
-  Bypass all confirmation prompts.
+This command supports the `-l/--log_file`, `-n/--dryrun`, and `-y/--confirm`
+options described above, plus:
 
 `--no-reprovision`
   When upgrading a zone, always provision a new zone and deprovision the
   previous one, rather than reprovisioning the existing one.
-
-See above for information about the `-l/--log_file` option.
 
 If `SERVICE` is specified, then only instances of the named service are
 changed.

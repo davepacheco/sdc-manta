@@ -31,18 +31,18 @@
     #
     event: upset.manta.zone.cpu_utilized
     legacyName: cpu utilization
-    scope: 
+    scope:
         service: all
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "test ! $(mpstat -a 1 2 | tail -n 1 | nawk '{total=$13+$14} END {print total}') -gt 80"
                 interval: 60
                 threshold: 23
                 period: 1800
                 timeout: 30
-    ka: 
+    ka:
         title: Excessive CPU utilization
         description: Aggregate CPU usage has been high for several minutes
         severity: minor
@@ -56,16 +56,16 @@
 -
     event: upset.manta.zone.filesystem_almost_full
     legacyName: "free space on / below 20%"
-    scope: 
+    scope:
         service: all
-    checks: 
-        - 
+    checks:
+        -
             type: disk-usage
-            config: 
+            config:
                 path: "/"
                 threshold: "20%"
                 interval: 3600
-    ka: 
+    ka:
         title: Filesystem almost full
         description: A zone filesystem is running low on free space
         severity: major
@@ -81,18 +81,18 @@
 -
     event: upset.manta.registrar.log_error
     legacyName: registrar-logscan
-    scope: 
+    scope:
         service: all
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: registrar
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"registrar" logged an error'
         description: The "registrar" service has logged an error.
         severity: major
@@ -110,17 +110,17 @@
 -
     event: upset.manta.zone.logs_lingering
     legacyName: logs not uploaded
-    scope: 
+    scope:
         service: all
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "test ! $(find /var/log/manta/upload -type f | wc -l) -gt 0"
                 interval: 300
                 threshold: 5
                 period: 1800
-    ka: 
+    ka:
         title: Log files not uploaded
         description: Some log files have not been uploaded
         severity: minor
@@ -130,7 +130,7 @@
         impact: >-
             There is no impact to end-user service.  However, failure to upload
             files is often indicative of problems affecting end user requests.
-            
+
             If the affected logs are used for metering, then metering reports
             and access logs for end users may be unavailable or incomplete until
             the affected logs are uploaded and the relevant metering jobs re-run
@@ -139,7 +139,7 @@
             Identify the reason for the failure and resolve the underlying
             issue.  If logs used for metering were affected, you may need to
             re-run the relevant metering jobs once all logs are available.
-            
+
             In most components, the log "/var/log/mbackup.log" has a record of
             recent upload attempts and results.  Another common cause of log
             upload failure is when a component or service was offline during the
@@ -153,20 +153,20 @@
     # different probe groups (and therefore different alarms) when SMF services
     # from different SAPI services go into maintenance.
     #
-    scope: 
+    scope:
         service: each
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "/usr/bin/svcs -x"
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: maintenance
                     matchWord: true
                 threshold: 1
                 period: 60
                 timeout: 30
-    ka: 
+    ka:
         title: SMF service in maintenance
         description: One or more SMF services are in maintenance
         severity: major
@@ -177,6 +177,6 @@
             instances are in maintenance, end users could experience errors.
         action: >-
             In the affected zones, use "svcs -xv" to identify the services in
-            maintenance and see basic instructions for tracking down the
+            maintenance and to see basic instructions for tracking down the
             problem.
 

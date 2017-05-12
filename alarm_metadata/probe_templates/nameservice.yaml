@@ -18,18 +18,18 @@
 -
     event: upset.manta.nameservice.zookeeper.log_error
     legacyName: "ZK: logscan 'ERROR'"
-    scope: 
+    scope:
         service: nameservice
-    checks: 
-        - 
+    checks:
+        -
             type: log-scan
-            config: 
+            config:
                 path: "/var/log/zookeeper/zookeeper.out"
-                match: 
+                match:
                     pattern: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"zookeeper" logged an error'
         description: The "zookeeper" service has logged an error.
         severity: major
@@ -46,18 +46,18 @@
 -
     event: upset.manta.nameservice.zookeeper.log_connrefused
     legacyName: "ZK: logscan 'Connection refused'"
-    scope: 
+    scope:
         service: nameservice
-    checks: 
-        - 
+    checks:
+        -
             type: log-scan
-            config: 
+            config:
                 path: "/var/log/zookeeper/zookeeper.out"
-                match: 
+                match:
                     pattern: "java.net.ConnectException: Connection refused"
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"zookeeper" logged a connection failure'
         description: The "zookeeper" service logged a connection failure.
         severity: minor
@@ -74,18 +74,18 @@
 -
     event: upset.manta.nameservice.binder.log_error
     legacyName: "binder: logscan"
-    scope: 
+    scope:
         service: nameservice
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: binder
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"binder" logged an error'
         description: The "binder" service has logged an error.
         severity: major
@@ -102,19 +102,19 @@
 -
     event: upset.manta.nameservice.zookeeper.notok
     legacyName: "ZK: ruok"
-    scope: 
+    scope:
         service: nameservice
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "echo 'ruok' | nc localhost 2181"
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: imok
                     invert: true
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: ZooKeeper not okay
         description: ZooKeeper reports that it is not okay
         severity: major

@@ -18,18 +18,18 @@
 -
     event: upset.manta.ops.log_error
     legacyName: mackerel-logscan
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mackerel.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mackerel" logged an error'
         description: The "mackerel" subsystem has logged an error.
         severity: minor
@@ -43,26 +43,26 @@
 -
     event: upset.manta.ops.backup_unpack.log_error
     legacyName: mola-pg-transform-logscan-error,mola-pg-transform-logscan-fatal
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-pg-transform.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-pg-transform.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mola-pg-transform" logged an error'
         description: The "mola-pg-transform" subsystem has logged an error.
         severity: minor
@@ -80,26 +80,26 @@
 -
     event: upset.manta.ops.gc.log_error
     legacyName: mola-logscan-error,mola-logscan-fatal
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mola" logged an error'
         description: The garbage collection subsystem has logged an error.
         severity: minor
@@ -115,26 +115,26 @@
 -
     event: upset.manta.ops.gc.create_links_log_error
     legacyName: mola-gc-create-links-logscan-error,mola-gc-create-links-logscan-fatal
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-gc-create-links.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-gc-create-links.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mola-gc-create-links" logged an error'
         description: The "mola-gc-create-links" subsystem has logged an error.
         severity: minor
@@ -150,26 +150,26 @@
 -
     event: upset.manta.ops.gc.moray_gc_log_error
     legacyName: mola-moray-gc-logscan-error,mola-moray-gc-logscan-fatal
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-moray-gc.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-moray-gc.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mola-moray-gc" logged an error'
         description: The "mola-moray-gc" subsystem has logged an error.
         severity: minor
@@ -184,26 +184,26 @@
 -
     event: upset.manta.ops.audit.log_error
     legacyName: mola-audit-logscan-error
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-audit.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/mola-audit.log"
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mola-audit" logged an error'
         description: The audit subsystem has logged an error.
         severity: minor
@@ -220,18 +220,18 @@
 -
     event: upset.manta.ops.gc.objects_lingering
     legacyName: mola-create-link-files-piling-up
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && test $(mfind /poseidon/stor/manta_gc/all/do | wc -l) -lt 150"
                 interval: 300
                 period: 1800
                 threshold: 6
                 timeout: 20
-    ka: 
+    ka:
         title: Garbage collection instructions piling up
         description: Garbage collection instruction objects are piling up
         severity: major
@@ -246,21 +246,21 @@
 -
     event: upset.manta.ops.gc.moray_objects_lingering
     legacyName: mola-moray-files-piling-up
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "set -o errexit && set -o pipefail && export HOME=/root && . /root/.bashrc && mfind /poseidon/stor/manta_gc/moray | sed s,^/poseidon/stor/manta_gc/moray/,, | awk -F/ 'NF == 1 { dirs[$1] = 1; } NF == 2 { counts[$1]++; } END { for (dir in dirs) { count = counts[dir]; if (count > 150) { printf(\"%s\\t%d\\n%s\\n\", dir, count, \"fail\"); } } }'"
                 interval: 300
                 period: 1800
                 threshold: 6
                 timeout: 20
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Garbage collection Moray instructions piling up
         description: Garbage collection Moray instruction objects are piling up
         severity: major
@@ -274,21 +274,21 @@
 -
     event: upset.manta.ops.gc.mako_objects_lingering
     legacyName: mola-mako-files-piling-up
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "set -o errexit && set -o pipefail && export HOME=/root && . /root/.bashrc && mfind /poseidon/stor/manta_gc/mako | sed s,^/poseidon/stor/manta_gc/mako/,, | awk -F/ 'NF == 1 { dirs[$1] = 1; } NF == 2 { counts[$1]++; } END { for (dir in dirs) { count = counts[dir]; if (count > 150) { printf(\"%s\\t%d\\n%s\\n\", dir, count, \"fail\"); } } }'"
                 interval: 300
                 period: 1800
                 threshold: 6
                 timeout: 20
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Garbage collection Mako instructions piling up
         description: Garbage collection Mako instruction objects are piling up
         severity: major
@@ -302,27 +302,27 @@
 -
     event: upset.manta.ops.gc.job_lingering
     legacyName: mola-job-running-too-long
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && test $(expr $(date +%s) - $(mjob get $(mjob list -n manta_gc -s running | head -1 | tr -d '/') | json timeCreated | xargs -i date --utc --date \"{}\" +%s)) -lt 10800; if [[ $? -eq 1 ]]; then echo \"fail\"; else echo \"success\"; fi"
                 interval: 300
                 threshold: 1
                 timeout: 20
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Garbage collection job running too long
         description: >-
             The regularly-scheduled garbage collection job has been running for
             longer than expected.
         severity: major
         response: No automated response will be taken.
-        impact: 
+        impact:
             Garbage collection may not be completing.  Disk space used may
             accumulate on storage nodes until the problem is repaired.
         action: >-
@@ -331,21 +331,21 @@
 -
     event: upset.manta.ops.dumps_missing
     legacyName: manatee-backups-failed
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/00' --date='7 hours ago'); echo $DATE; for s in $(mls /poseidon/stor/manatee_backups | tr -d '/'); do /opt/local/bin/echo -n \"$s \"; until [[ \"$MLS\" != '' ]]; do export MLS=$(mls /poseidon/stor/manatee_backups/$s/$DATE 2>&1); done; echo \"$MLS\" | grep '\\(manta_delete_log-\\)\\|\\(marlin_tasks_v2-\\)' >/dev/null; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi; export MLS=''; done"
                 interval: 300
                 threshold: 1
                 period: 3600
                 timeout: 60
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Unpacked metadata dumps are missing
         description: Regularly-scheduled metadata dumps have not been unpacked
         severity: major
@@ -364,21 +364,21 @@
 -
     event: upset.manta.ops.metering.summary_missing
     legacyName: mackerel-summary-missing
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d' --date='30 hours ago'); echo $DATE; mls /poseidon/stor/usage/summary/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
                 interval: 300
                 threshold: 1
                 period: 3600
                 timeout: 60
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Recent metering summary report missing
         description: A metering summary report could not be found.
         severity: minor
@@ -393,21 +393,21 @@
 -
     event: upset.manta.ops.metering.storage_missing
     legacyName: mackerel-storage-missing
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/00' --date='12 hours ago'); echo $DATE; mls /poseidon/stor/usage/storage/$DATE 2>&1 | grep h00.json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
                 interval: 300
                 threshold: 1
                 period: 3600
                 timeout: 60
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Recent metering storage report missing
         description: A metering storage report could not be found.
         severity: minor
@@ -421,21 +421,21 @@
 -
     event: upset.manta.ops.metering.request_missing
     legacyName: mackerel-request-missing
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/%H' --date='2 hours ago'); echo $DATE; mls /poseidon/stor/usage/request/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
                 interval: 300
                 threshold: 1
                 period: 3600
                 timeout: 60
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Recent metering request report missing
         description: A metering request report could not be found.
         severity: minor
@@ -450,21 +450,21 @@
 -
     event: upset.manta.ops.metering.compute_missing
     legacyName: mackerel-compute-missing
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "export HOME=/root && . /root/.bashrc && export DATE=$(date +'%Y/%m/%d/%H' --date='2 hours ago'); echo $DATE; mls /poseidon/stor/usage/compute/$DATE 2>&1 | grep .json; if [[ $? == 0 ]]; then echo 'pass'; else echo 'fail'; fi;"
                 interval: 300
                 threshold: 1
                 period: 3600
                 timeout: 60
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: fail
                     type: substring
-    ka: 
+    ka:
         title: Recent metering compute report missing
         description: A metering compute report could not be found.
         severity: minor
@@ -479,17 +479,17 @@
 -
     event: upset.manta.ops.jobpuller.falling_behind
     legacyName: wrasse-behind
-    scope: 
+    scope:
         service: ops
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "/opt/smartdc/mola/amon/checks/check-wrasse-behind"
                 timeout: 180
                 interval: 3600
                 threshold: 1
-    ka: 
+    ka:
         title: Job archiver is falling behind
         description: There are too many jobs that have not been archived.
         severity: minor

@@ -18,34 +18,34 @@
 -
     event: upset.manta.jobsupervisor.log_error
     legacyName: jobsupervisor-logscan-error, jobsupervisor-logscan-fatal, jobsupervisor-logscan-core
-    scope: 
+    scope:
         service: jobsupervisor
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: jobsupervisor
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-        - 
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: jobsupervisor
-                fields: 
+                fields:
                     level: FATAL
                 threshold: 1
                 period: 60
-        - 
+        -
             type: log-scan
-            config: 
+            config:
                 smfServiceName: jobsupervisor
-                match: 
+                match:
                     pattern: Stopping because process dumped core.
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"jobsupervisor" logged an error'
         description: The "jobsupervisor" service has logged an error.
         severity: major
