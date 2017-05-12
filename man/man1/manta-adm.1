@@ -612,19 +612,12 @@ care should be taken when using it with stateful services like "postgres" or
 "storage".  See the Manta Operator's Guide for the appropriate procedures for
 upgrading all components.\fP
 .PP
-Options:
-.TP
-\fB\fC\-n, \-\-dryrun\fR
-Print what changes would be made without actually making them.
-.TP
-\fB\fC\-y, \-\-confirm\fR
-Bypass all confirmation prompts.
+This command supports the \fB\fC\-l/\-\-log_file\fR, \fB\fC\-n/\-\-dryrun\fR, and \fB\fC\-y/\-\-confirm\fR
+options described above, plus:
 .TP
 \fB\fC\-\-no\-reprovision\fR
 When upgrading a zone, always provision a new zone and deprovision the
 previous one, rather than reprovisioning the existing one.
-.PP
-See above for information about the \fB\fC\-l/\-\-log_file\fR option.
 .PP
 If \fB\fCSERVICE\fR is specified, then only instances of the named service are
 changed.
