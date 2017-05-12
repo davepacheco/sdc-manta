@@ -963,6 +963,7 @@ MantaAdmAlarm.prototype.doAlarmPrintSubcommand = function
 
 			if (error instanceof Error) {
 				cmdutil.warn(error);
+				nerrors++;
 			}
 
 			console.log('');
@@ -1441,6 +1442,7 @@ MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
 
 			if (error instanceof Error) {
 				cmdutil.warn(error);
+				nerrors++;
 			}
 
 			console.log('');

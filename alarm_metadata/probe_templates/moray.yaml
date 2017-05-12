@@ -18,18 +18,18 @@
 -
     event: upset.manta.moray.log_error
     legacyName: moray-logscan
-    scope: 
+    scope:
         service: moray
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/moray.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"moray" logged an error'
         description: The "moray" service has logged an error.
         severity: major

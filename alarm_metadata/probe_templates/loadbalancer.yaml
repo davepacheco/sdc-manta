@@ -18,19 +18,19 @@
 -
     event: upset.manta.loadbalancer.haproxy.memory
     legacyName: "haproxy memory size (1G)"
-    scope: 
+    scope:
         service: loadbalancer
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "ps -o rss= -p \"$(pgrep -c \"$(svcs -H -o ctid haproxy)\")\" | awk '$1 > 1048576{ printf(\"haproxy rss too large\\n\"); }'"
-                stdoutMatch: 
+                stdoutMatch:
                     pattern: haproxy rss too large
                 interval: 120
                 threshold: 2
                 period: 360
-    ka: 
+    ka:
         title: Loadbalancer "haproxy" using too much memory
         description: >-
             Loadbalancer "haproxy" processes are using more memory than
@@ -42,22 +42,24 @@
             memory, then performance may degrade and errors may be induced in
             end-user requests.
         action:
-            Check the "haproxy" process for memory leaks.
+            You may restart the "haproxy" service to alleviate the issue
+            temporarily, though this will impact some end user requests, and it
+            will not resolve the underlying cause of any resource leak.
 
 -
     event: upset.manta.loadbalancer.stud.memory
     legacyName: "stud memory size (1G)"
-    scope: 
+    scope:
         service: loadbalancer
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "test ! $(ps -orss -p \"`pgrep stud`\" | grep -v RSS | nawk '{t+=$1}END{print t}') -gt 1048576"
                 interval: 120
                 threshold: 2
                 period: 360
-    ka: 
+    ka:
         title: Loadbalancer "stud" using too much memory
         description: >-
             Loadbalancer "stud" processes are using more memory than expected.
@@ -68,22 +70,24 @@
             memory, then performance may degrade and errors may be induced in
             end-user requests.
         action:
-            Check the "stud" process for memory leaks.
+            You may restart the "stud" service to alleviate the issue
+            temporarily, though this will impact some end user requests, and it
+            will not resolve the underlying cause of any resource leak.
 
 -
     event: upset.manta.loadbalancer.muppet.memory
     legacyName: "muppet memory size (512M)"
-    scope: 
+    scope:
         service: loadbalancer
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "test ! $(ps -orss -p $(svcs -Hoctid -p muppet | tail -n 1 | awk '{print $2}') | tail -n 1) -gt 524288"
                 interval: 120
                 threshold: 2
                 period: 360
-    ka: 
+    ka:
         title: Loadbalancer "muppet" using too much memory
         description: >-
             Loadbalancer "muppet" processes are using more memory than expected.
@@ -95,18 +99,18 @@
 -
     event: upset.manta.loadbalancer.muppet.log_error
     legacyName: muppet-logscan
-    scope: 
+    scope:
         service: loadbalancer
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: muppet
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"muppet" logged an error'
         description: The "muppet" service has logged an error.
         severity: major
@@ -123,17 +127,17 @@
 -
     event: upset.manta.loadbalancer.no_backends
     legacyName: no backend servers
-    scope: 
+    scope:
         service: loadbalancer
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "test -n $(/opt/smartdc/muppet/build/node/bin/node /opt/smartdc/muppet/node_modules/.bin/haproxystat showStat /tmp/haproxy  | /opt/smartdc/muppet/build/node/bin/node -e 's=\"\"; process.stdin.resume(); process.stdin.on(\"data\",function(c){s+=c}); process.stdin.on(\"end\",function(){o=eval(\"(\"+s+\")\");console.log(JSON.stringify(o)); });' | /usr/bin/json  -c 'this.type == \"backend\" && !/stats/.test(this.pxname) && act == 0' -a pxname)"
                 interval: 30
                 threshold: 2
                 period: 120
-    ka: 
+    ka:
         title: Loadbalancer has no backends
         description: A loadbalancer has no working backends
         severity: critical
