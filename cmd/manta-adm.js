@@ -552,7 +552,7 @@ function MantaAdmZk(parent)
 {
 	this.mn_parent = parent;
 	cmdln.Cmdln.call(this, {
-	    'name': 'zk',
+	    'name': parent.name + ' zk',
 	    'desc': 'View and modify ZooKeeper servers configuration.'
 	});
 }
@@ -760,7 +760,7 @@ function MantaAdmAlarm(parent)
 {
 	this.maa_parent = parent;
 	cmdln.Cmdln.call(this, {
-	    'name': 'alarm',
+	    'name': parent.name + ' alarm',
 	    'desc': 'View and configure information about alarms.'
 	});
 }
@@ -1164,7 +1164,7 @@ function MantaAdmAlarmConfig(parent)
 	this.maac_root = parent.maa_parent;
 
 	cmdln.Cmdln.call(this, {
-	    'name': 'config',
+	    'name': parent.name + ' config',
 	    'desc': 'Manage probe and probe group configuration'
 	});
 }
@@ -1371,7 +1371,7 @@ function MantaAdmAlarmMetadata(parent)
 	this.maam_root = parent.maa_parent;
 
 	cmdln.Cmdln.call(this, {
-	    'name': 'metadata',
+	    'name': parent.name + ' metadata',
 	    'desc': 'View local metadata about alarm config'
 	});
 }
@@ -1473,7 +1473,7 @@ function MantaAdmAlarmProbeGroup(parent)
 	this.maap_root = parent.maac_root;
 
 	cmdln.Cmdln.call(this, {
-	    'name': 'probegroup',
+	    'name': parent.name + ' probegroup',
 	    'desc': 'View and configure information about amon probe groups.'
 	});
 }
