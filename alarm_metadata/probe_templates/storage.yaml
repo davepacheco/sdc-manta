@@ -18,18 +18,18 @@
 -
     event: upset.manta.storage.mako_gc.log_error
     legacyName: mako-gc-logscan
-    scope: 
+    scope:
         service: storage
-    checks: 
-        - 
+    checks:
+        -
             type: log-scan
-            config: 
+            config:
                 path: "/var/log/mako_gc.log"
-                match: 
+                match:
                     pattern: fatal error
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"mako-gc" logged an error'
         description: The "mako-gc" subsystem has logged an error.
         severity: minor
@@ -44,18 +44,18 @@
 -
     event: upset.manta.storage.minnow.logscan
     legacyName: minnow-logscan
-    scope: 
+    scope:
         service: storage
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 smfServiceName: minnow
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"minnow" logged an error'
         description: The "minnow" service has logged an error.
         severity: major
@@ -71,17 +71,17 @@
 -
     event: upset.manta.storage.minnow.heartbeat_stale
     legacyName: minnow heartbeat too old
-    scope: 
+    scope:
         service: storage
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 cmd: "/bin/bash -c 'if [[ -f /opt/smartdc/minnow/bin/check-minnow ]]; then /opt/smartdc/minnow/bin/check-minnow; exit $?; fi; let delta=$(date +%s)-$(PATH=/opt/smartdc/minnow/build/node/bin:/opt/smartdc/minnow/node_modules/.bin:$PATH findobjects -h $(cat /opt/smartdc/minnow/etc/config.json | json moray.host) manta_storage hostname=$(hostname)* | json -e _mtime=_mtime/1000 -e _mtime=~~_mtime _mtime) ; test $delta -lt 900'"
                 threshold: 3
                 period: 300
                 timeout: 30
-    ka: 
+    ka:
         title: Storage zone heartbeat is too old
         description: The minnow record for a storage zone is out of date
         severity: minor
@@ -106,20 +106,20 @@
     # better if Amon supported opening alarms when expected checks did not
     # complete successfully.
     #
-    scope: 
+    scope:
         service: storage
         checkFrom: nameservice
-    checks: 
-        - 
+    checks:
+        -
             type: cmd
-            config: 
+            config:
                 autoEnv:
                     - MANTA_STORAGE_ID
                 cmd: "curl -m 5 -sf http://$MANTA_STORAGE_ID/50x.html -o /dev/null"
                 interval: 60
                 threshold: 3
                 period: 300
-    ka: 
+    ka:
         title: Storage node HTTP ping failed
         description: A storage node failed to respond to an HTTP ping request.
         severity: major

@@ -70,7 +70,7 @@
         impact: >-
             The daily metadata backups may not have been unpacked.  As a result,
             regularly scheduled garbage collection, audit, and metering jobs may
-            not be running or their results may be incomplete.   Disk usage may
+            not be running or their results may be incomplete.  Disk usage may
             accumulate on metadata and storage nodes until the problem is
             resolved.
         action: >-

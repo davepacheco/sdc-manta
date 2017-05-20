@@ -18,18 +18,18 @@
 -
     event: upset.manta.webapi.log_error
     legacyName: muskie-logscan
-    scope: 
+    scope:
         service: webapi
-    checks: 
-        - 
+    checks:
+        -
             type: bunyan-log-scan
-            config: 
+            config:
                 path: "/var/log/muskie.log"
-                fields: 
+                fields:
                     level: ERROR
                 threshold: 1
                 period: 60
-    ka: 
+    ka:
         title: '"muskie" logged an error'
         description: The "muskie" service has logged an error.
         severity: major
