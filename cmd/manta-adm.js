@@ -61,18 +61,18 @@ var maCommonOptions = {
     'columns': {
 	'names': [ 'columns', 'o' ],
 	'type': 'arrayOfString',
-	'help': 'Select columns for output (see below)'
+	'help': 'Select columns for output (see below).'
     },
     'concurrency': {
 	'names': [ 'concurrency' ],
 	'type': 'positiveInteger',
-	'help': 'Number of concurrent requests to make',
+	'help': 'Number of concurrent requests to make.',
 	'default': maDefaultAlarmConcurrency
     },
     'configFile': {
 	'names': [ 'config-file' ],
 	'type': 'string',
-	'help': 'Path to configuration',
+	'help': 'Path to configuration.',
 	'default': common.CONFIG_FILE_DEFAULT
     },
     'confirm': {
@@ -88,7 +88,7 @@ var maCommonOptions = {
     'logFile': {
 	'names': [ 'log_file', 'log-file', 'l' ],
 	'type': 'string',
-	'help': 'Dump logs to this file (or "stdout")',
+	'help': 'Dump logs to this file (or "stdout").',
 	'default': '/var/log/manta-adm.log'
     },
     'logFileDefaultNone': {
@@ -99,12 +99,12 @@ var maCommonOptions = {
     'omitHeader': {
 	'names': [ 'omit-header', 'H'],
 	'type': 'bool',
-	'help': 'Omit the header row for columnar output'
+	'help': 'Omit the header row for columnar output.'
     },
     'unconfigure': {
 	'names': [ 'unconfigure' ],
 	'type': 'bool',
-	'help': 'Remove all probes and probe groups instead of updating them',
+	'help': 'Remove all probes and probe groups instead of updating them.',
 	'default': false
     }
 };
@@ -607,7 +607,7 @@ MantaAdmZk.prototype.do_list = function (subcmd, opts, args, callback)
 };
 
 MantaAdmZk.prototype.do_list.help =
-    'List configured ZooKeeper servers\n\n' +
+    'List configured ZooKeeper servers.\n\n' +
     'Usage:\n\n' +
     '    manta-adm zk list OPTIONS\n\n' +
     'Examples:\n\n' +
@@ -726,7 +726,7 @@ MantaAdmZk.prototype.do_fixup = function (subcmd, opts, args, callback)
 };
 
 MantaAdmZk.prototype.do_fixup.help = [
-    'Repair ZooKeeper configuration',
+    'Repair ZooKeeper configuration.',
     '',
     'This command compares the ZooKeeper configuration (defined by the ',
     'ZK_SERVERS and ZK_ID SAPI metadata properties) to the list of deployed ',
@@ -874,7 +874,7 @@ MantaAdmAlarm.prototype.do_close = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_close.help = [
-    'Close open alarms',
+    'Close open alarms.',
     '',
     'Usage:',
     '',
@@ -896,7 +896,7 @@ MantaAdmAlarm.prototype.do_details = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_details.help = [
-    'Print details about an alarm',
+    'Print details about an alarm.',
     '',
     'Usage:',
     '',
@@ -915,7 +915,7 @@ MantaAdmAlarm.prototype.do_faults = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_faults.help = [
-    'Print information about all of an alarm\'s faults',
+    'Print information about all of an alarm\'s faults.',
     '',
     'Usage:',
     '',
@@ -1025,7 +1025,7 @@ MantaAdmAlarm.prototype.do_list = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_list.help = [
-    'List open alarms',
+    'List open alarms.',
     '',
     'Usage:',
     '',
@@ -1103,7 +1103,7 @@ MantaAdmAlarm.prototype.do_notify = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_notify.help = [
-    'Enable or disable alarm notifications',
+    'Enable or disable alarm notifications.',
     '',
     'Usage:',
     '',
@@ -1146,7 +1146,7 @@ MantaAdmAlarm.prototype.do_show = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarm.prototype.do_show.help = [
-    'Summarize open alarms',
+    'Summarize open alarms.',
     '',
     'Usage:',
     '',
@@ -1165,7 +1165,7 @@ function MantaAdmAlarmConfig(parent)
 
 	cmdln.Cmdln.call(this, {
 	    'name': parent.name + ' config',
-	    'desc': 'Manage probe and probe group configuration'
+	    'desc': 'Manage probe and probe group configuration.'
 	});
 }
 
@@ -1204,7 +1204,7 @@ MantaAdmAlarmConfig.prototype.do_show = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarmConfig.prototype.do_show.help = [
-    'Summarize configured probes and probe groups',
+    'Summarize configured probes and probe groups.',
     '',
     'Usage:',
     '',
@@ -1372,7 +1372,7 @@ function MantaAdmAlarmMetadata(parent)
 
 	cmdln.Cmdln.call(this, {
 	    'name': parent.name + ' metadata',
-	    'desc': 'View local metadata about alarm config'
+	    'desc': 'View local metadata about alarm config.'
 	});
 }
 
@@ -1403,7 +1403,7 @@ MantaAdmAlarmMetadata.prototype.do_events =
 };
 
 MantaAdmAlarmMetadata.prototype.do_events.help = [
-    'List known event names',
+    'List known event names.',
     '',
     'Usage:',
     '',
@@ -1457,10 +1457,11 @@ MantaAdmAlarmMetadata.prototype.do_ka = function (subcmd, opts, args, callback)
 };
 
 MantaAdmAlarmMetadata.prototype.do_ka.help = [
-    'Print information about an event',
+    'Print information about events.',
     '',
     'Usage:',
     '',
+    '    manta-adm alarm ka',
     '    manta-adm alarm ka EVENT_NAME'
 ].join('\n');
 
